@@ -13,12 +13,23 @@ namespace KhBroDisplaySetup
         {
             Extern.Displays.SwitchToExtendModeIfClone();
 
-            Screen[] screens = Screen.AllScreens;
-            List<string> screenDeviceNames = new();
+            // The assumption here is that GetWmiMonitorsWithDisplayDeviceName
+            // returns the screens in the "connected order"
+            List<Dictionary<string, string>> displayWmi = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
 
-            foreach (Screen screen in screens)
+            //Screen[] screens = Screen.AllScreens;
+            //List<string> screenDeviceNames = new();
+
+            //foreach (Screen screen in screens)
+            //{
+            //    screenDeviceNames.Add(screen.DeviceName);
+            //}
+
+            List<string> screenDeviceNames = new();
+            foreach (var disp in displayWmi)
             {
-                screenDeviceNames.Add(screen.DeviceName);
+                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                screenDeviceNames.Add(disp["DeviceName"]);
             }
 
             string primaryDisplayName = null;

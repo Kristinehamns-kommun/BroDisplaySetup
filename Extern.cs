@@ -8,7 +8,7 @@ namespace KhBroDisplaySetup
     namespace Extern
     {
         [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Ansi)]
-        public struct DEVMODE1
+        public struct DEVMODE
         {
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
             [FieldOffset(0)]
@@ -406,16 +406,16 @@ namespace KhBroDisplaySetup
         class User_32
         {
             [DllImport("user32.dll")]
-            public static extern int EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE1 devMode);
+            public static extern int EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE devMode);
 
             [DllImport("user32.dll")]
-            public static extern int ChangeDisplaySettings(ref DEVMODE1 devMode, int flags);
+            public static extern int ChangeDisplaySettings(ref DEVMODE devMode, int flags);
 
             [DllImport("user32.dll")]
             public static extern bool EnumDisplayDevices(string lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
 
             [DllImport("user32.dll")]
-            public static extern DISP_CHANGE ChangeDisplaySettingsEx(string lpszDeviceName, ref DEVMODE1 lpDevMode, IntPtr hwnd, ChangeDisplaySettingsFlags dwflags, IntPtr lParam);
+            public static extern DISP_CHANGE ChangeDisplaySettingsEx(string lpszDeviceName, ref DEVMODE lpDevMode, IntPtr hwnd, ChangeDisplaySettingsFlags dwflags, IntPtr lParam);
 
             [DllImport("user32.dll")]
             public static extern DISP_CHANGE ChangeDisplaySettingsEx(string lpszDeviceName, IntPtr lpDevMode, IntPtr hwnd, ChangeDisplaySettingsFlags dwflags, IntPtr lParam);
@@ -561,7 +561,7 @@ namespace KhBroDisplaySetup
             public static string GetCurrentResolution(string deviceName)
             {
                 string returnValue = null;
-                DEVMODE1 dm = GetDevMode1();
+                DEVMODE dm = GetDevMode1();
                 if (0 != User_32.EnumDisplaySettings(deviceName, User_32.ENUM_CURRENT_SETTINGS, ref dm))
                 {
                     returnValue = dm.dmPelsWidth + "," + dm.dmPelsHeight;
@@ -572,7 +572,7 @@ namespace KhBroDisplaySetup
             public static string GetCurrentResolutionAndPosition(string deviceName)
             {
                 string returnValue = null;
-                DEVMODE1 dm = GetDevMode1();
+                DEVMODE dm = GetDevMode1();
                 if (0 != User_32.EnumDisplaySettings(deviceName, User_32.ENUM_CURRENT_SETTINGS, ref dm))
                 {
                     returnValue = dm.dmPelsWidth + "x" + dm.dmPelsHeight + " at " + dm.dmPosition.x + "," + dm.dmPosition.y;
@@ -582,7 +582,7 @@ namespace KhBroDisplaySetup
 
             public static uint GetCurrentResolutionWidth(string deviceName)
             {
-                DEVMODE1 dm = GetDevMode1();
+                DEVMODE dm = GetDevMode1();
                 if (0 != User_32.EnumDisplaySettings(deviceName, User_32.ENUM_CURRENT_SETTINGS, ref dm))
                 {
                     return dm.dmPelsWidth;
@@ -615,7 +615,7 @@ namespace KhBroDisplaySetup
             // public static void SetPrimaryDisplay(string deviceName)
             // {
             //     IntPtr nullPtr = IntPtr.Zero;
-            //     DEVMODE1 primaryDevmode = new DEVMODE1 { dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE1)), dmFields = 0x20 };
+            //     DEVMODE primaryDevmode = new DEVMODE { dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE)), dmFields = 0x20 };
             //     int result = User_32.ChangeDisplaySettingsEx(deviceName, ref primaryDevmode, nullPtr, ChangeDisplaySettingsFlags .CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags .CDS_SET_PRIMARY, nullPtr);		
             //     switch (result)
             //     {
@@ -634,7 +634,7 @@ namespace KhBroDisplaySetup
             //     }
             // }
 
-            public static uint ComputeDisplayModeScore(DEVMODE1 mode)
+            public static uint ComputeDisplayModeScore(DEVMODE mode)
             {
                 return mode.dmPelsWidth * mode.dmPelsHeight * mode.dmBitsPerPel + mode.dmDisplayFrequency;
             }
@@ -645,7 +645,7 @@ namespace KhBroDisplaySetup
              * as the first mode is worse than, equal to, or better than the 
              * second mode based on the "score" of the display mode
              **/
-            public static int CompareDisplayModes(DEVMODE1 first, DEVMODE1 second)
+            public static int CompareDisplayModes(DEVMODE first, DEVMODE second)
             {
                 uint firstRank = ComputeDisplayModeScore(first);
                 uint secondRank = ComputeDisplayModeScore(second);
@@ -663,14 +663,14 @@ namespace KhBroDisplaySetup
                 }
             }
 
-            public static DEVMODE1 GetOptimalDisplayMode(string deviceName)
+            public static DEVMODE GetOptimalDisplayMode(string deviceName)
             {
-                DEVMODE1 mode = new DEVMODE1();
+                DEVMODE mode = new DEVMODE();
                 mode.dmSize = (ushort)Marshal.SizeOf(mode);
 
                 int modeIndex = 0;
                 int bestModeIndex = 0;
-                uint bestRank = 0;
+                uint bestScore = 0;
 
                 //Console.WriteLine("Get optimal displaymode " + deviceName);
 
@@ -683,11 +683,11 @@ namespace KhBroDisplaySetup
 
                     //Console.WriteLine("Found a mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz");
 
-                    if (currentModeRank > bestRank)
+                    if (currentModeRank > bestScore)
                     {
                         bestModeIndex = modeIndex;
-                        bestRank = currentModeRank;
-                        //Console.WriteLine("Found a better mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz" + " at index " + modeIndex);
+                        bestScore = currentModeRank;
+                        System.Diagnostics.Debug.WriteLine("Found a better mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz" + " at index " + modeIndex);
                     }
                     modeIndex++;
                 }
@@ -705,9 +705,9 @@ namespace KhBroDisplaySetup
                 throw new InvalidOperationException("An error occurred getting optimal display mode for '" + deviceName + "' at index " + bestModeIndex + ".");
             }
 
-            public static DEVMODE1 GetCurrentDisplayMode(string deviceName)
+            public static DEVMODE GetCurrentDisplayMode(string deviceName)
             {
-                DEVMODE1 dm = GetDevMode1();
+                DEVMODE dm = GetDevMode1();
                 if (0 != User_32.EnumDisplaySettings(deviceName, User_32.ENUM_CURRENT_SETTINGS, ref dm))
                 {
                     return dm;
@@ -750,22 +750,24 @@ namespace KhBroDisplaySetup
 
             public static void Arrange(string primaryDisplayName, string[] leftDisplayNames, string[] rightDisplayNames)
             {
-                //const uint DM_PELSWIDTH = 0x00080000;
-                //const uint DM_PELSHEIGHT = 0x00100000;
+                const uint DM_PELSWIDTH = 0x00080000;
+                const uint DM_PELSHEIGHT = 0x00100000;
                 //const uint DM_BITSPERPEL = 0x00040000;
                 const uint DM_POSITION = 0x00000020;
                 //const uint DM_DISPLAYFREQUENCY = 0x00400000;
                 //const uint DM_DISPLAYFLAGS = 0x00200000;
 
-                DEVMODE1 primaryDevMode = new DEVMODE1 { dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE1)), dmFields = DM_POSITION | 0x20 };
-                DEVMODE1 bestPrimaryDisplayMode = GetOptimalDisplayMode(primaryDisplayName);
-                DEVMODE1 currentPrimaryDisplayMode = GetCurrentDisplayMode(primaryDisplayName);
-                int comparePrimaryModeResult = CompareDisplayModes(bestPrimaryDisplayMode, currentPrimaryDisplayMode);
-                if (comparePrimaryModeResult > 0)
+                DEVMODE optimalPrimaryDisplayMode = GetOptimalDisplayMode(primaryDisplayName);
+                DEVMODE primaryDevMode = GetCurrentDisplayMode(primaryDisplayName);
+                
+                if (CompareDisplayModes(optimalPrimaryDisplayMode, primaryDevMode) > 0)
                 {
-                    Console.WriteLine("Set primary " + primaryDisplayName + " to " + bestPrimaryDisplayMode.dmPelsWidth + "x" + bestPrimaryDisplayMode.dmPelsHeight + " at " + bestPrimaryDisplayMode.dmDisplayFrequency + "Hz");
+                    System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + optimalPrimaryDisplayMode.dmPelsWidth + "x" + optimalPrimaryDisplayMode.dmPelsHeight + " at " + optimalPrimaryDisplayMode.dmDisplayFrequency + "Hz");
+                    primaryDevMode = optimalPrimaryDisplayMode;
+                    primaryDevMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                 }
 
+                primaryDevMode.dmFields |= DM_POSITION;
                 primaryDevMode.dmPosition.x = 0;
                 primaryDevMode.dmPosition.y = 0;
 
@@ -779,22 +781,22 @@ namespace KhBroDisplaySetup
                 Array.Reverse(leftDisplayNames);
                 foreach (string displayName in leftDisplayNames)
                 {
-                    DEVMODE1 devMode = new DEVMODE1 { dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE1)), dmFields = DM_POSITION };
-                    DEVMODE1 bestDisplayMode = GetOptimalDisplayMode(displayName);
-                    DEVMODE1 currentDisplayMode = GetCurrentDisplayMode(displayName);
-                    int compareModeResult = CompareDisplayModes(bestDisplayMode, currentDisplayMode);
-                    if (compareModeResult > 0)
+                    DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
+                    DEVMODE devMode = GetCurrentDisplayMode(displayName);
+                    if (CompareDisplayModes(optimalDisplayMode, devMode) > 0)
                     {
-                        Console.WriteLine("Set " + displayName + " to " + bestDisplayMode.dmPelsWidth + "x" + bestDisplayMode.dmPelsHeight + " at " + bestDisplayMode.dmDisplayFrequency + "Hz");
+                        System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
+                        devMode = optimalDisplayMode;
+                        devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                     }
 
                     positionX -= (int)GetCurrentResolutionWidth(displayName);
+                    devMode.dmFields |= DM_POSITION;
                     devMode.dmPosition.x = positionX;
                     devMode.dmPosition.y = positionY;
 
                     Console.WriteLine("Set left " + displayName + " to " + devMode.dmPosition.x + "," + devMode.dmPosition.y);
-                    //User_32.ChangeDisplaySettingsEx(displayName, ref devMode, nullPtr, 0, nullPtr);
-                    //User_32.ChangeDisplaySettingsEx(displayName, ref devMode, nullPtr, ChangeDisplaySettingsFlags .CDS_UPDATEREGISTRY, nullPtr);
+
                     User_32.ChangeDisplaySettingsEx(
                         displayName,
                         ref devMode,
@@ -807,26 +809,27 @@ namespace KhBroDisplaySetup
 
                 foreach (string displayName in rightDisplayNames)
                 {
-                    DEVMODE1 devMode = new DEVMODE1 { dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE1)), dmFields = DM_POSITION };
-                    DEVMODE1 bestDisplayMode = GetOptimalDisplayMode(displayName);
-                    DEVMODE1 currentDisplayMode = GetCurrentDisplayMode(displayName);
-                    int compareModeResult = CompareDisplayModes(bestDisplayMode, currentDisplayMode);
-                    if (compareModeResult > 0)
+                    DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
+                    DEVMODE devMode = GetCurrentDisplayMode(displayName);
+                    if (CompareDisplayModes(optimalDisplayMode, devMode) > 0)
                     {
-                        Console.WriteLine("Set " + displayName + " to " + bestDisplayMode.dmPelsWidth + "x" + bestDisplayMode.dmPelsHeight + " at " + bestDisplayMode.dmDisplayFrequency + "Hz");
+                        System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
+                        devMode = optimalDisplayMode;
+                        devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                     }
 
+                    devMode.dmFields |= DM_POSITION;
                     devMode.dmPosition.x = positionX;
                     devMode.dmPosition.y = positionY;
                     Console.WriteLine("Set right " + displayName + " to " + positionX + "," + positionY);
-                    //User_32.ChangeDisplaySettingsEx(displayName, ref devMode, nullPtr, 0, nullPtr);
-                    //User_32.ChangeDisplaySettingsEx(displayName, ref devMode, nullPtr, ChangeDisplaySettingsFlags .CDS_UPDATEREGISTRY, nullPtr);
+
                     User_32.ChangeDisplaySettingsEx(
                         displayName,
                         ref devMode,
                         (IntPtr)null,
                         ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET,
                         IntPtr.Zero);
+
                     positionX += (int)GetCurrentResolutionWidth(displayName);
                 }
 
@@ -834,9 +837,9 @@ namespace KhBroDisplaySetup
                 User_32.ChangeDisplaySettingsEx(null, IntPtr.Zero, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_NONE, (IntPtr)null);
             }
 
-            private static DEVMODE1 GetDevMode1()
+            private static DEVMODE GetDevMode1()
             {
-                DEVMODE1 dm = new DEVMODE1();
+                DEVMODE dm = new DEVMODE();
                 dm.dmDeviceName = new string(new char[32]);
                 dm.dmFormName = new string(new char[32]);
                 dm.dmSize = (ushort)Marshal.SizeOf(dm);

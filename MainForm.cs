@@ -21,5 +21,12 @@ namespace KhBroDisplaySetup
         {
             Displays.AutoArrange();
         }
+
+        private void btnScreenInfo_Click(object sender, EventArgs e)
+        {
+            //MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            ScreenInfoForm screenInfoForm = new ScreenInfoForm();
+            screenInfoForm.Show();
+        }
     }
 }
