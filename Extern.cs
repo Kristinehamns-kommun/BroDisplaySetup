@@ -440,17 +440,17 @@ namespace KhBroDisplaySetup
         {
             public static IList<string> GetDisplayNames()
             {
-                var returnVals = new List<string>();
+                var displayNames = new List<string>();
                 for (var x = 0U; x < 1024; ++x)
                 {
                     DISPLAY_DEVICE outVar = new DISPLAY_DEVICE();
                     outVar.cb = (ushort)Marshal.SizeOf(outVar);
                     if (User_32.EnumDisplayDevices(null, x, ref outVar, 1U))
                     {
-                        returnVals.Add(outVar.DeviceName);
+                        displayNames.Add(outVar.DeviceName);
                     }
                 }
-                return returnVals;
+                return displayNames;
             }
 
             public static IList<string> GetDesktopAttachedDisplayNames()

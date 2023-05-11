@@ -19,7 +19,7 @@ namespace KhBroDisplaySetup
 
         private void autoArrangeDisplays_Click(object sender, EventArgs e)
         {
-            Displays.AutoArrange();
+            Displays.Configure();
         }
 
         private void btnScreenInfo_Click(object sender, EventArgs e)
