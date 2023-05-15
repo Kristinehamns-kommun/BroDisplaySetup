@@ -37,6 +37,7 @@
             txtScreenInfo.Location = new System.Drawing.Point(11, 11);
             txtScreenInfo.Multiline = true;
             txtScreenInfo.Name = "txtScreenInfo";
+            txtScreenInfo.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             txtScreenInfo.Size = new System.Drawing.Size(647, 311);
             txtScreenInfo.TabIndex = 0;
             // 

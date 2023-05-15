@@ -81,7 +81,6 @@ namespace KhBroDisplaySetup
 
         private System.Windows.Forms.Button btnManualArrangeDisplays;
         private System.Windows.Forms.Button btnScreenInfo;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btnAutoArrangeDisplays;
     }
 }
