@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.ComponentModel;
 using System.IO;
-using static KhBroDisplaySetup.ScreenInterrogatory;
 
 namespace KhBroDisplaySetup 
 { 
@@ -818,7 +817,7 @@ namespace KhBroDisplaySetup
                             };
                             var result = User_32.DisplayConfigGetDeviceInfo(ref targetName);
 
-                            if (result != ERROR_SUCCESS) // ERROR_SUCCESS
+                            if (result != User_32.ERROR_SUCCESS) // ERROR_SUCCESS
                             {
                                 throw new Win32Exception(result);
                                 //continue;
@@ -840,7 +839,7 @@ namespace KhBroDisplaySetup
 
                             result = User_32.DisplayConfigGetDeviceInfo(ref adapterName);
 
-                            if (result != ERROR_SUCCESS) // ERROR_SUCCESS
+                            if (result != User_32.ERROR_SUCCESS) // ERROR_SUCCESS
                             {
                                 throw new Win32Exception(result);
                             }
