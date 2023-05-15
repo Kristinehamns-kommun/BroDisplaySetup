@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -10,13 +11,17 @@ namespace KhBroDisplaySetup
 {
     class Displays
     {
-        public static void Configure()
+        public static void ArrangeAutomaticallyFromLTRWithAutoResolution()
+        {
+            Extern.Displays.SwitchToExtendModeIfClone();
+            ArrangeLTRWithAutoPrimary(MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName().Select(i => i["DeviceName"]).ToList());
+        }
+
+        public static void ArrangeManuallyFromLTRWithAutoResolution()
         {
             Extern.Displays.SwitchToExtendModeIfClone();
             ConfigureDisplayOrderAndArrange();
         }
-
-
         public static void ConfigureDisplayOrderAndArrange()
         {
             List<Form> screenIdForms = new List<Form>();
@@ -184,41 +189,62 @@ namespace KhBroDisplaySetup
                             primaryForm.Dispose();
                         });
 
-                        Arrange(userOrderedDeviceNames);
+                        ArrangeLTRWithAutoPrimary(userOrderedDeviceNames);
                     };
                 }
 
             }
         }
 
-        public static void Arrange(List<String> screenDeviceNames) {
-            string primaryDisplayName = null;
-            List<string> leftDisplayNames = new();
-            List<string> rightDisplayNames = new();
+        public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
+            List<Dictionary<string, string>> wmiMonitors = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            int primaryDisplayIndex = 0;
 
-            if (screenDeviceNames.Count == 1)
+            foreach (var deviceName in screenDeviceNamesLTR)
             {
-                return;
-            }
-            else if (screenDeviceNames.Count > 1)
-            {
-                // Assume the laptop is to the left
-                leftDisplayNames.Add(screenDeviceNames[0]);
-                screenDeviceNames.RemoveAt(0); // Remove the first screen from the list
+                bool displayInternal = false;
 
-                // The primary screen is the second screen to the right
-                primaryDisplayName = screenDeviceNames[0];
-                screenDeviceNames.RemoveAt(0);
-
-                // Check that screenDeviceNames is not empty
-                if (screenDeviceNames.Count > 0)
+                foreach(var wmiMonitor in wmiMonitors)
                 {
-                    // Set rightDisplayNames to the rest of the screens
-                    rightDisplayNames.AddRange(screenDeviceNames);
+                    if (wmiMonitor["DeviceName"].Equals(deviceName)) {
+                        if (wmiMonitor.ContainsKey("Internal") && wmiMonitor["Internal"].Equals("Yes"))
+                        {
+                            displayInternal = true;
+                        }
+                    }
+                }
+
+
+                if (displayInternal)
+                {
+                    primaryDisplayIndex++;
+                }
+                else
+                {
+                    break;
                 }
             }
 
-            Extern.Displays.Arrange(primaryDisplayName, leftDisplayNames.ToArray(), rightDisplayNames.ToArray());
+            List<string> leftDisplayNames = new();
+            List<string> rightDisplayNames = new();
+
+            for(int i = 0; i < screenDeviceNamesLTR.Count; i++)
+            {
+                if (i < primaryDisplayIndex)
+                {
+                    leftDisplayNames.Add(screenDeviceNamesLTR[i]);
+                }
+                else if (i > primaryDisplayIndex)
+                {
+                    rightDisplayNames.Add(screenDeviceNamesLTR[i]);
+                }
+            }
+
+            String primaryDisplayName = screenDeviceNamesLTR[primaryDisplayIndex];
+
+            System.Diagnostics.Debug.WriteLine("Primary: ", screenDeviceNamesLTR[primaryDisplayIndex]);
+            
+            Extern.Displays.Arrange(screenDeviceNamesLTR[primaryDisplayIndex], leftDisplayNames.ToArray(), rightDisplayNames.ToArray());
         }
     }
 }

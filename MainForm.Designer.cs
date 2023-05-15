@@ -29,37 +29,49 @@ namespace KhBroDisplaySetup
         /// </summary>
         private void InitializeComponent()
         {
-            autoArrangeDisplays = new System.Windows.Forms.Button();
+            btnManualArrangeDisplays = new System.Windows.Forms.Button();
             btnScreenInfo = new System.Windows.Forms.Button();
+            btnAutoArrangeDisplays = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
-            // autoArrangeDisplays
+            // btnManualArrangeDisplays
             // 
-            autoArrangeDisplays.Location = new System.Drawing.Point(87, 21);
-            autoArrangeDisplays.Name = "autoArrangeDisplays";
-            autoArrangeDisplays.Size = new System.Drawing.Size(149, 23);
-            autoArrangeDisplays.TabIndex = 0;
-            autoArrangeDisplays.Text = "Konfigurera skärmar";
-            autoArrangeDisplays.UseVisualStyleBackColor = true;
-            autoArrangeDisplays.Click += autoArrangeDisplays_Click;
+            btnManualArrangeDisplays.Location = new System.Drawing.Point(59, 12);
+            btnManualArrangeDisplays.Name = "btnManualArrangeDisplays";
+            btnManualArrangeDisplays.Size = new System.Drawing.Size(195, 23);
+            btnManualArrangeDisplays.TabIndex = 0;
+            btnManualArrangeDisplays.Text = "Konfigurera skärmar manuellt";
+            btnManualArrangeDisplays.UseVisualStyleBackColor = true;
+            btnManualArrangeDisplays.Click += btnManualArrangeDisplays_Click;
             // 
             // btnScreenInfo
             // 
-            btnScreenInfo.Location = new System.Drawing.Point(87, 50);
+            btnScreenInfo.Location = new System.Drawing.Point(59, 80);
             btnScreenInfo.Name = "btnScreenInfo";
-            btnScreenInfo.Size = new System.Drawing.Size(149, 24);
+            btnScreenInfo.Size = new System.Drawing.Size(195, 24);
             btnScreenInfo.TabIndex = 1;
             btnScreenInfo.Text = "Visa skärminformation...";
             btnScreenInfo.UseVisualStyleBackColor = true;
             btnScreenInfo.Click += btnScreenInfo_Click;
             // 
+            // btnAutoArrangeDisplays
+            // 
+            btnAutoArrangeDisplays.Location = new System.Drawing.Point(59, 38);
+            btnAutoArrangeDisplays.Name = "btnAutoArrangeDisplays";
+            btnAutoArrangeDisplays.Size = new System.Drawing.Size(195, 23);
+            btnAutoArrangeDisplays.TabIndex = 2;
+            btnAutoArrangeDisplays.Text = "Konfigurera skärmar automatiskt";
+            btnAutoArrangeDisplays.UseVisualStyleBackColor = true;
+            btnAutoArrangeDisplays.Click += btnAutoArrangeDisplays_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(315, 93);
+            ClientSize = new System.Drawing.Size(316, 118);
+            Controls.Add(btnAutoArrangeDisplays);
             Controls.Add(btnScreenInfo);
-            Controls.Add(autoArrangeDisplays);
+            Controls.Add(btnManualArrangeDisplays);
             Name = "MainForm";
             Text = "KhBroDisplaySetup";
             ResumeLayout(false);
@@ -67,8 +79,10 @@ namespace KhBroDisplaySetup
 
         #endregion
 
-        private System.Windows.Forms.Button autoArrangeDisplays;
+        private System.Windows.Forms.Button btnManualArrangeDisplays;
         private System.Windows.Forms.Button btnScreenInfo;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnAutoArrangeDisplays;
     }
 }
 

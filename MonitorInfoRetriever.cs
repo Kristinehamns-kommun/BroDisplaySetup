@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management;
+using KhBroDisplaySetup.Extern;
 using Microsoft.Win32;
 
 namespace KhBroDisplaySetup
@@ -26,7 +27,6 @@ namespace KhBroDisplaySetup
                 System.Diagnostics.Debug.WriteLine("{0}={1}", kvp.Key, kvp.Value);
             }
 
-            //var displayNameToWmiMonitorInfo = new SortedDictionary<string, Dictionary<string, string>>(new MonitorInfoInsertionOrderComparer());
             var wmiMonitorDisplayDevices = new List<Dictionary<string, string>>();
 
             var scope = new ManagementScope("root\\wmi");
@@ -34,14 +34,20 @@ namespace KhBroDisplaySetup
             var searcher = new ManagementObjectSearcher(scope, query);
             var monitorInfoList = searcher.Get();
 
-            //string regPath = @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration";
-            //var regKeys = Registry.LocalMachine.OpenSubKey(regPath).GetSubKeyNames();
+            Dictionary<string, Extern.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> displayOutputTechnologies = Extern.Displays.GetVideoOutputTechnologyByDevicePath();
+
+            foreach(var tech in displayOutputTechnologies)
+            {
+                System.Diagnostics.Debug.WriteLine("{0}={1}", tech.Key, tech.Value);
+            }
 
             foreach (ManagementObject monitor in monitorInfoList)
             {
                 string name = DecodeName(monitor["UserFriendlyName"] as ushort[]);
                 string serial = DecodeName(monitor["SerialNumberID"] as ushort[]);
                 string productCodeID = DecodeName(monitor["ProductCodeID"] as ushort[]);
+                string manufacturerName = DecodeName(monitor["ManufacturerName"] as ushort[]);
+                string instanceName = (string)monitor["InstanceName"];
                 string monitorPnpDeviceId = ((string)monitor["InstanceName"]).Split('_')[0].ToUpper();
 
                 string displayProduct = monitorPnpDeviceId.Split('\\')[1];
@@ -49,13 +55,34 @@ namespace KhBroDisplaySetup
                 string matchUser32DeviceId = monitorPnpDeviceId.Replace("\\", "#");
                 matchUser32DeviceId = "\\\\?\\" + matchUser32DeviceId;
 
-             
+                String outputTechnology = "Unknown";
+                String internalMonitor = "Unknown";
+                foreach (var tech in displayOutputTechnologies)
+                {
+                    System.Diagnostics.Debug.WriteLine("{0} contains {1}", tech.Key.ToUpper(), monitorPnpDeviceId.Replace("\\", "#"));
+                    if (tech.Key.ToUpper().Contains(monitorPnpDeviceId.Replace("\\", "#")))
+                    {
+                        outputTechnology = tech.Value.ToString();
+                        if (tech.Value == DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL)
+                        {
+                            internalMonitor = "Yes";
+                        } else {
+                            internalMonitor = "No";
+                        }
+                        break;
+                    }
+                }
+
                 var limitedMonitorInfo = new Dictionary<string, string>
                 {
                     { "Name", name },
                     { "Serial", serial },
                     { "ProductCodeID", productCodeID },
-                    { "PnpDeviceId", monitorPnpDeviceId }
+                    { "Manufacturer", manufacturerName },
+                    { "PnpDeviceId", monitorPnpDeviceId },
+                    { "InstanceName", instanceName },
+                    { "VideoOutputTechnology", outputTechnology },
+                    { "Internal", internalMonitor }
                 };
 
                 //foreach (KeyValuePair<string, string> kvp in limitedMonitorInfo)
@@ -75,11 +102,16 @@ namespace KhBroDisplaySetup
 
                 string user32DeviceId = displayPnpIdToDisplayName.Keys.FirstOrDefault(x => x.ToUpper().StartsWith(matchUser32DeviceId));
 
-                limitedMonitorInfo.Add("DeviceName", displayPnpIdToDisplayName[user32DeviceId]);
+                String deviceName = displayPnpIdToDisplayName[user32DeviceId];
+
+                limitedMonitorInfo.Add("DeviceName", deviceName);
+
+                Extern.DEVMODE optimalDevMode = Extern.Displays.GetOptimalDisplayMode(deviceName);
+
+                limitedMonitorInfo.Add("Optimal resolution", optimalDevMode.dmPelsWidth + "x" + optimalDevMode.dmPelsHeight);
 
                 foreach (KeyValuePair<string, string> kvp in limitedMonitorInfo)
                 {
-                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
                     System.Diagnostics.Debug.WriteLine("{0}={1}", kvp.Key, kvp.Value);
                 }
 

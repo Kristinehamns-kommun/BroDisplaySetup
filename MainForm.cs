@@ -17,16 +17,26 @@ namespace KhBroDisplaySetup
             InitializeComponent();
         }
 
-        private void autoArrangeDisplays_Click(object sender, EventArgs e)
-        {
-            Displays.Configure();
-        }
+        //private void autoArrangeDisplays_Click(object sender, EventArgs e)
+        //{
+        //   
+        //}
 
         private void btnScreenInfo_Click(object sender, EventArgs e)
         {
             //MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
             ScreenInfoForm screenInfoForm = new ScreenInfoForm();
             screenInfoForm.Show();
+        }
+
+        private void btnManualArrangeDisplays_Click(object sender, EventArgs e)
+        {
+            Displays.ArrangeManuallyFromLTRWithAutoResolution();
+        }
+
+        private void btnAutoArrangeDisplays_Click(object sender, EventArgs e)
+        {
+            Displays.ArrangeAutomaticallyFromLTRWithAutoResolution();
         }
     }
 }

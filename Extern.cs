@@ -2,6 +2,9 @@
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Threading;
+using System.ComponentModel;
+using System.IO;
+using static KhBroDisplaySetup.ScreenInterrogatory;
 
 namespace KhBroDisplaySetup 
 { 
@@ -190,189 +193,6 @@ namespace KhBroDisplaySetup
             DISPLAYCONFIG_TOPOLOGY_EXTEND = 0x00000004,
             DISPLAYCONFIG_TOPOLOGY_EXTERNAL = 0x00000008,
         }
-        [Flags]
-        public enum QueryDisplayFlags : uint
-        {
-            QDC_ALL_PATHS = 0x00000001,
-            QDC_ONLY_ACTIVE_PATHS = 0x00000002,
-            QDC_DATABASE_CURRENT = 0x00000004,
-            QDC_VIRTUAL_MODE_AWARE = 0x00000010,
-            QDC_INCLUDE_HMD = 0x00000020,
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_PATH_INFO
-        {
-            public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
-            public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
-            public uint flags;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_PATH_SOURCE_INFO
-        {
-            public LUID adapterId;
-            public uint id;
-            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
-            public DISPLAYCONFIG_ROTATION rotation;
-            public DISPLAYCONFIG_SCALING scaling;
-            public DISPLAYCONFIG_RATIONAL refreshRate;
-            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
-            public bool targetAvailable;
-            public uint statusFlags;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_PATH_TARGET_INFO
-        {
-            public LUID adapterId;
-            public uint id;
-            public uint modeInfoIdx;
-            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
-            public DISPLAYCONFIG_ROTATION rotation;
-            public DISPLAYCONFIG_SCALING scaling;
-            public DISPLAYCONFIG_RATIONAL refreshRate;
-            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
-            public bool targetAvailable;
-            public uint statusFlags;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_MODE_INFO
-        {
-            public DISPLAYCONFIG_MODE_INFO_TYPE infoType;
-            public uint id;
-            public LUID adapterId;
-            public DISPLAYCONFIG_TARGET_MODE targetMode;
-            public DISPLAYCONFIG_SOURCE_MODE sourceMode;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_TARGET_MODE
-        {
-            public DISPLAYCONFIG_VIDEO_SIGNAL_INFO targetVideoSignalInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_SOURCE_MODE
-        {
-            public uint width;
-            public uint height;
-            public DISPLAYCONFIG_PIXELFORMAT pixelFormat;
-            public POINTL position;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LUID
-        {
-            public uint LowPart;
-            public int HighPart;
-        }
-
-        public enum DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY : int
-        {
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_OTHER = -1,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HD15 = 0,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SVIDEO = 1,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPOSITE_VIDEO = 2,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPONENT_VIDEO = 3,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI = 4,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HDMI = 5,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_LVDS = 6,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_D_JPN = 8,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDI = 9,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL = 10,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED = 11,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EXTERNAL = 12,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED = 13,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDTVDONGLE = 14,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_MIRACAST = 15,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INDIRECT_WIRED = 16,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INDIRECT_VIRTUAL = 17,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_USB_C = 18,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_NETWORK = 19,
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL = unchecked((int)0x80000000),
-            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_FORCE_UINT32 = unchecked((int)0xFFFFFFFF)
-        }
-
-        public enum DISPLAYCONFIG_ROTATION : uint
-        {
-            DISPLAYCONFIG_ROTATION_IDENTITY = 1,
-            DISPLAYCONFIG_ROTATION_ROTATE90 = 2,
-            DISPLAYCONFIG_ROTATION_ROTATE180 = 3,
-            DISPLAYCONFIG_ROTATION_ROTATE270 = 4,
-            DISPLAYCONFIG_ROTATION_FORCE_UINT32 = 0xFFFFFFFF
-        }
-
-        public enum DISPLAYCONFIG_SCALING : uint
-        {
-            DISPLAYCONFIG_SCALING_IDENTITY = 1,
-            DISPLAYCONFIG_SCALING_CENTERED = 2,
-            DISPLAYCONFIG_SCALING_STRETCHED = 3,
-            DISPLAYCONFIG_SCALING_ASPECTRATIOCENTEREDMAX = 4,
-            DISPLAYCONFIG_SCALING_CUSTOM = 5,
-            DISPLAYCONFIG_SCALING_PREFERRED = 128,
-            DISPLAYCONFIG_SCALING_FORCE_UINT32 = 0xFFFFFFFF
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_RATIONAL
-        {
-            public uint Numerator;
-            public uint Denominator;
-        }
-
-        public enum DISPLAYCONFIG_SCANLINE_ORDERING : uint
-        {
-            DISPLAYCONFIG_SCANLINE_ORDERING_UNSPECIFIED = 0,
-            DISPLAYCONFIG_SCANLINE_ORDERING_PROGRESSIVE = 1,
-            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED = 2,
-            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED_UPPERFIELDFIRST = DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED,
-            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED_LOWERFIELDFIRST = 3,
-            DISPLAYCONFIG_SCANLINE_ORDERING_FORCE_UINT32 = 0xFFFFFFFF
-        }
-
-        public enum DISPLAYCONFIG_MODE_INFO_TYPE : uint
-        {
-            DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE = 1,
-            DISPLAYCONFIG_MODE_INFO_TYPE_TARGET = 2,
-            DISPLAYCONFIG_MODE_INFO_TYPE_FORCE_UINT32 = 0xFFFFFFFF
-        }
-
-        public enum DISPLAYCONFIG_PIXELFORMAT : uint
-        {
-            DISPLAYCONFIG_PIXELFORMAT_8BPP = 1,
-            DISPLAYCONFIG_PIXELFORMAT_16BPP = 2,
-            DISPLAYCONFIG_PIXELFORMAT_24BPP = 3,
-            DISPLAYCONFIG_PIXELFORMAT_32BPP = 4,
-            DISPLAYCONFIG_PIXELFORMAT_NONGDI = 0x8000000,
-            DISPLAYCONFIG_PIXELFORMAT_FORCE_UINT32 = 0xFFFFFFFF
-        }
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINTL
-        {
-            public int x;
-            public int y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DISPLAYCONFIG_VIDEO_SIGNAL_INFO
-        {
-            public DISPLAYCONFIG_RATIONAL pixelRate;
-            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
-            public uint videoStandard;
-            public DISPLAYCONFIG_RATIONAL vSyncFreq;
-            public DISPLAYCONFIG_RATIONAL hSyncFreq;
-            public bool activeSizeAspectRatioValid;
-            public uint activeSizeWidth;
-            public uint activeSizeHeight;
-            public uint totalSizeWidth;
-            public uint totalSizeHeight;
-            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY videoOutputTechnology;
-            public uint connectorInstanceId;
-        }
 
         [Flags()]
         public enum ChangeDisplaySettingsFlags : uint
@@ -403,8 +223,257 @@ namespace KhBroDisplaySetup
             BadDualView = -6
         }
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct DISPLAYCONFIG_ADAPTER_NAME
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string adapterDevicePath;
+        }
+
+        [Flags]
+        public enum DISPLAYCONFIG_TARGET_FLAGS : uint
+        {
+            Zero = 0x0,
+            FriendlyNameFromEDID = 0x1,
+            ForcedResolution = 0x2,
+            EdidIdsValid = 0x4,
+        }
+
+        // begos
+        public enum QUERY_DEVICE_CONFIG_FLAGS : uint
+        {
+            QDC_ALL_PATHS = 0x00000001,
+            QDC_ONLY_ACTIVE_PATHS = 0x00000002,
+            QDC_DATABASE_CURRENT = 0x00000004,
+            QDC_VIRTUAL_MODE_AWARE = 0x00000010,
+            QDC_INCLUDE_HMD = 0x00000020,
+        }
+
+        public enum DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY : uint
+        {
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_OTHER = 0xFFFFFFFF,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HD15 = 0,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SVIDEO = 1,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPOSITE_VIDEO = 2,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_COMPONENT_VIDEO = 3,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DVI = 4,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_HDMI = 5,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_LVDS = 6,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_D_JPN = 8,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDI = 9,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL = 10,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED = 11,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EXTERNAL = 12,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED = 13,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_SDTVDONGLE = 14,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_MIRACAST = 15,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL = 0x80000000,
+            DISPLAYCONFIG_OUTPUT_TECHNOLOGY_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        public enum DISPLAYCONFIG_SCANLINE_ORDERING : uint
+        {
+            DISPLAYCONFIG_SCANLINE_ORDERING_UNSPECIFIED = 0,
+            DISPLAYCONFIG_SCANLINE_ORDERING_PROGRESSIVE = 1,
+            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED = 2,
+            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED_UPPERFIELDFIRST = DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED,
+            DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED_LOWERFIELDFIRST = 3,
+            DISPLAYCONFIG_SCANLINE_ORDERING_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        public enum DISPLAYCONFIG_ROTATION : uint
+        {
+            DISPLAYCONFIG_ROTATION_IDENTITY = 1,
+            DISPLAYCONFIG_ROTATION_ROTATE90 = 2,
+            DISPLAYCONFIG_ROTATION_ROTATE180 = 3,
+            DISPLAYCONFIG_ROTATION_ROTATE270 = 4,
+            DISPLAYCONFIG_ROTATION_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        public enum DISPLAYCONFIG_SCALING : uint
+        {
+            DISPLAYCONFIG_SCALING_IDENTITY = 1,
+            DISPLAYCONFIG_SCALING_CENTERED = 2,
+            DISPLAYCONFIG_SCALING_STRETCHED = 3,
+            DISPLAYCONFIG_SCALING_ASPECTRATIOCENTEREDMAX = 4,
+            DISPLAYCONFIG_SCALING_CUSTOM = 5,
+            DISPLAYCONFIG_SCALING_PREFERRED = 128,
+            DISPLAYCONFIG_SCALING_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        public enum DISPLAYCONFIG_PIXELFORMAT : uint
+        {
+            DISPLAYCONFIG_PIXELFORMAT_8BPP = 1,
+            DISPLAYCONFIG_PIXELFORMAT_16BPP = 2,
+            DISPLAYCONFIG_PIXELFORMAT_24BPP = 3,
+            DISPLAYCONFIG_PIXELFORMAT_32BPP = 4,
+            DISPLAYCONFIG_PIXELFORMAT_NONGDI = 5,
+            DISPLAYCONFIG_PIXELFORMAT_FORCE_UINT32 = 0xffffffff
+        }
+
+        public enum DISPLAYCONFIG_MODE_INFO_TYPE : uint
+        {
+            DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE = 1,
+            DISPLAYCONFIG_MODE_INFO_TYPE_TARGET = 2,
+            DISPLAYCONFIG_MODE_INFO_TYPE_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        public enum DISPLAYCONFIG_DEVICE_INFO_TYPE : uint
+        {
+            DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME = 1,
+            DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2,
+            DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE = 3,
+            DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME = 4,
+            DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE = 5,
+            DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE = 6,
+            DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32 = 0xFFFFFFFF
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LUID
+        {
+            public uint LowPart;
+            public int HighPart;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_SOURCE_INFO
+        {
+            public LUID adapterId;
+            public uint id;
+            public uint modeInfoIdx;
+            public uint statusFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_TARGET_INFO
+        {
+            public LUID adapterId;
+            public uint id;
+            public uint modeInfoIdx;
+            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
+            private DISPLAYCONFIG_ROTATION rotation;
+            private DISPLAYCONFIG_SCALING scaling;
+            private DISPLAYCONFIG_RATIONAL refreshRate;
+            private DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
+            public bool targetAvailable;
+            public uint statusFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_RATIONAL
+        {
+            public uint Numerator;
+            public uint Denominator;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_INFO
+        {
+            public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
+            public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
+            public uint flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_2DREGION
+        {
+            public uint cx;
+            public uint cy;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_VIDEO_SIGNAL_INFO
+        {
+            public ulong pixelRate;
+            public DISPLAYCONFIG_RATIONAL hSyncFreq;
+            public DISPLAYCONFIG_RATIONAL vSyncFreq;
+            public DISPLAYCONFIG_2DREGION activeSize;
+            public DISPLAYCONFIG_2DREGION totalSize;
+            public uint videoStandard;
+            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_TARGET_MODE
+        {
+            public DISPLAYCONFIG_VIDEO_SIGNAL_INFO targetVideoSignalInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINTL
+        {
+            private int x;
+            private int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_SOURCE_MODE
+        {
+            public uint width;
+            public uint height;
+            public DISPLAYCONFIG_PIXELFORMAT pixelFormat;
+            public POINTL position;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct DISPLAYCONFIG_MODE_INFO_UNION
+        {
+            [FieldOffset(0)]
+            public DISPLAYCONFIG_TARGET_MODE targetMode;
+
+            [FieldOffset(0)]
+            public DISPLAYCONFIG_SOURCE_MODE sourceMode;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_MODE_INFO
+        {
+            public DISPLAYCONFIG_MODE_INFO_TYPE infoType;
+            public uint id;
+            public LUID adapterId;
+            public DISPLAYCONFIG_MODE_INFO_UNION modeInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS
+        {
+            public uint value;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_DEVICE_INFO_HEADER
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_TYPE type;
+            public uint size;
+            public LUID adapterId;
+            public uint id;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct DISPLAYCONFIG_TARGET_DEVICE_NAME
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+            public DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS flags;
+            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
+            public ushort edidManufactureId;
+            public ushort edidProductCodeId;
+            public uint connectorInstance;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string monitorFriendlyDeviceName;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string monitorDevicePath;
+        }
+
+
         class User_32
         {
+            public const int ERROR_SUCCESS = 0;
+
             [DllImport("user32.dll")]
             public static extern int EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE devMode);
 
@@ -424,10 +493,24 @@ namespace KhBroDisplaySetup
             public static extern int SetDisplayConfig(uint numPathArrayElements, IntPtr pathArray, uint numModeArrayElements, IntPtr modeArray, SdcFlags flags);
 
             [DllImport("user32.dll")]
-            public static extern int QueryDisplayConfig(QueryDisplayFlags flags, ref uint numPathArrayElements, [Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref uint numModeArrayElements, [Out] DISPLAYCONFIG_MODE_INFO[] modeArray, out DISPLAYCONFIG_TOPOLOGY_ID currentTopologyId);
+            public static extern int QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS flags, ref uint numPathArrayElements, [Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref uint numModeArrayElements, [Out] DISPLAYCONFIG_MODE_INFO[] modeArray, out DISPLAYCONFIG_TOPOLOGY_ID currentTopologyId);
 
             [DllImport("user32.dll")]
-            public static extern int GetDisplayConfigBufferSizes(QueryDisplayFlags flags, out uint numPathArrayElements, out uint numModeArrayElements);
+            public static extern int QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS flags, ref uint numPathArrayElements, [Out] DISPLAYCONFIG_PATH_INFO[] pathArray, ref uint numModeArrayElements, [Out] DISPLAYCONFIG_MODE_INFO[] modeArray, IntPtr currentTopologyId);
+
+            [DllImport("user32.dll")]
+            public static extern int GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS flags, out uint numPathArrayElements, out uint numModeArrayElements);
+
+            //[DllImport("user32.dll")]
+            //public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_DEVICE_INFO_HEADER deviceInfoHeader);
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName);
+
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_ADAPTER_NAME deviceName);
+
             public const int ENUM_CURRENT_SETTINGS = -1;
             public const int ENUM_REGISTRY_SETTINGS = -2;
             public const int DISP_CHANGE_SUCCESSFUL = 0;
@@ -647,13 +730,13 @@ namespace KhBroDisplaySetup
              **/
             public static int CompareDisplayModes(DEVMODE first, DEVMODE second)
             {
-                uint firstRank = ComputeDisplayModeScore(first);
-                uint secondRank = ComputeDisplayModeScore(second);
-                if (firstRank < secondRank)
+                uint firstScore = ComputeDisplayModeScore(first);
+                uint secondScore = ComputeDisplayModeScore(second);
+                if (firstScore < secondScore)
                 {
                     return -1;
                 }
-                else if (firstRank > secondRank)
+                else if (firstScore > secondScore)
                 {
                     return 1;
                 }
@@ -705,6 +788,106 @@ namespace KhBroDisplaySetup
                 throw new InvalidOperationException("An error occurred getting optimal display mode for '" + deviceName + "' at index " + bestModeIndex + ".");
             }
 
+            public static IEnumerable<KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_PATH_INFO>> AllActiveDisplayConfigPathsByTargetDeviceName()
+            {
+                uint pathArraySize = 0;
+                uint modeArraySize = 0;
+
+                int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, out pathArraySize, out modeArraySize);
+
+                if (bufferSizeResult == 0)
+                {
+                    DISPLAYCONFIG_PATH_INFO[] pathArray = new DISPLAYCONFIG_PATH_INFO[pathArraySize];
+                    DISPLAYCONFIG_MODE_INFO[] modeArray = new DISPLAYCONFIG_MODE_INFO[modeArraySize];
+
+                    int queryResult = User_32.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, ref pathArraySize, pathArray, ref modeArraySize, modeArray, IntPtr.Zero);
+
+                    if (queryResult == 0)
+                    {
+                        foreach (DISPLAYCONFIG_PATH_INFO path in pathArray)
+                        {
+                            var targetName = new DISPLAYCONFIG_TARGET_DEVICE_NAME
+                            {
+                                header =
+                                    {
+                                        type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+                                        size = (uint)Marshal.SizeOf(typeof (DISPLAYCONFIG_TARGET_DEVICE_NAME)),
+                                        adapterId = path.targetInfo.adapterId,
+                                        id = path.targetInfo.id,
+                                    }
+                            };
+                            var result = User_32.DisplayConfigGetDeviceInfo(ref targetName);
+
+                            if (result != ERROR_SUCCESS) // ERROR_SUCCESS
+                            {
+                                throw new Win32Exception(result);
+                                //continue;
+                            }
+
+                            yield return new KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_PATH_INFO>(targetName, path);
+
+                            // Find the adapter device name
+                            DISPLAYCONFIG_ADAPTER_NAME adapterName = new DISPLAYCONFIG_ADAPTER_NAME
+                            {
+                                header =
+                                    {
+                                        type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME,
+                                        size = (uint)Marshal.SizeOf(typeof (DISPLAYCONFIG_ADAPTER_NAME)),
+                                        adapterId = path.targetInfo.adapterId,
+                                        id = path.targetInfo.id,
+                                    }
+                            };
+
+                            result = User_32.DisplayConfigGetDeviceInfo(ref adapterName);
+
+                            if (result != ERROR_SUCCESS) // ERROR_SUCCESS
+                            {
+                                throw new Win32Exception(result);
+                            }
+
+                            //if ((targetName.flags & DISPLAYCONFIG_TARGET_FLAGS.FriendlyNameFromEDID) != 0)
+                            //{
+                            //    System.Diagnostics.Debug.WriteLine(
+                            //        "Monitor with name {0} is connected to adapter {1} on target {2}",
+                            //        targetName.monitorFriendlyDeviceName,
+                            //        adapterName.adapterDevicePath,
+                            //        path.targetInfo.id
+                            //    );
+                            //}
+                            //else
+                            //{
+                            //    System.Diagnostics.Debug.WriteLine(
+                            //        "Monitor with name {0} is connected to adapter {1} on target {2}",
+                            //        "Unknown",
+                            //        adapterName.adapterDevicePath,
+                            //        path.targetInfo.id
+                            //    );
+                            //}
+                        }
+                    }
+                    else
+                    {
+                        throw new Win32Exception(queryResult);
+                    }
+                }
+                else
+                {
+                    throw new Win32Exception(bufferSizeResult);
+                }
+
+            }
+
+            public static Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> GetVideoOutputTechnologyByDevicePath()
+            {
+                var result = new Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY>();
+                foreach(var keyVal in AllActiveDisplayConfigPathsByTargetDeviceName())
+                {
+                    result.Add(keyVal.Key.monitorDevicePath, keyVal.Value.targetInfo.outputTechnology);
+                }
+
+                return result;
+            }
+
             public static DEVMODE GetCurrentDisplayMode(string deviceName)
             {
                 DEVMODE dm = GetDevMode1();
@@ -721,14 +904,14 @@ namespace KhBroDisplaySetup
                 uint modeArraySize = 0;
                 DISPLAYCONFIG_TOPOLOGY_ID currentTopologyId;
 
-                int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QueryDisplayFlags.QDC_ALL_PATHS, out pathArraySize, out modeArraySize);
+                int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ALL_PATHS, out pathArraySize, out modeArraySize);
 
                 if (bufferSizeResult == 0)
                 {
                     DISPLAYCONFIG_PATH_INFO[] pathArray = new DISPLAYCONFIG_PATH_INFO[pathArraySize];
                     DISPLAYCONFIG_MODE_INFO[] modeArray = new DISPLAYCONFIG_MODE_INFO[modeArraySize];
 
-                    int queryResult = User_32.QueryDisplayConfig(QueryDisplayFlags.QDC_DATABASE_CURRENT, ref pathArraySize, pathArray, ref modeArraySize, modeArray, out currentTopologyId);
+                    int queryResult = User_32.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_DATABASE_CURRENT, ref pathArraySize, pathArray, ref modeArraySize, modeArray, out currentTopologyId);
 
                     if (queryResult == 0)
                     {
