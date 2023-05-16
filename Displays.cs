@@ -127,7 +127,7 @@ namespace KhBroDisplaySetup
                             if (e.KeyCode == Keys.Back)
                             {
                                 previousTextBox.Focus();
-                                System.Diagnostics.Debug.WriteLine("Move back on keyup");
+                                //System.Diagnostics.Debug.WriteLine("Move back on keyup");
                             }
                         };
 
@@ -136,7 +136,7 @@ namespace KhBroDisplaySetup
                             if (e.KeyCode != Keys.Back)
                             {
                                 textBox.Focus();
-                                System.Diagnostics.Debug.WriteLine("Next on keyup");
+                                //System.Diagnostics.Debug.WriteLine("Next on keyup");
                             }
                         };
                     }
@@ -149,7 +149,7 @@ namespace KhBroDisplaySetup
                         firstTextBox = textBox;
                     }
 
-                    System.Diagnostics.Debug.WriteLine("Add tb");
+                    //System.Diagnostics.Debug.WriteLine("Add tb");
 
                     textboxIndex++;
                 }
