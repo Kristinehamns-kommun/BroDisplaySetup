@@ -756,19 +756,16 @@ namespace KhBroDisplaySetup
 
                 //Console.WriteLine("Get optimal displaymode " + deviceName);
 
-                User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode);
-                modeIndex++;
-
                 while (0 != User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode))
                 {
-                    uint currentModeRank = ComputeDisplayModeScore(mode);
+                    uint currentModeScore = ComputeDisplayModeScore(mode);
 
                     //Console.WriteLine("Found a mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz");
 
-                    if (currentModeRank > bestScore)
+                    if (currentModeScore > bestScore)
                     {
                         bestModeIndex = modeIndex;
-                        bestScore = currentModeRank;
+                        bestScore = currentModeScore;
                         System.Diagnostics.Debug.WriteLine("Found a better mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz" + " at index " + modeIndex);
                     }
                     modeIndex++;
