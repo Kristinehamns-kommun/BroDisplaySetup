@@ -73,6 +73,12 @@ namespace KhBroDisplaySetup
 
             List<String> initialArrangement = GetAutoArrangedLTRScreenDeviceNames();
 
+            List<Form> screenForms = new List<Form>();
+            
+            Color khBroColor = Color.FromArgb(205, 236, 251);
+            Color unselectedColor = SystemColors.ControlDark;
+            Color selectedColor = khBroColor; // Form.DefaultBackColor;
+
             foreach (String screenDeviceName in initialArrangement)
             {
                 Screen screen = screenDeviceNameToScreenMap[screenDeviceName];
@@ -86,28 +92,34 @@ namespace KhBroDisplaySetup
                 form.StartPosition = FormStartPosition.Manual;
                 form.Bounds = screen.Bounds;
                 form.TopMost = false;
+                form.BackColor = unselectedColor;
                 form.Show();
                 form.Paint += (s, e) =>
                 {
+                    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
                     // Determine the number to display based on the device name
                     int displayIndex = screen.DeviceName.LastIndexOf("DISPLAY");
                     int displayNum = Int32.Parse(screen.DeviceName.Substring(displayIndex + "DISPLAY".Length));
 
                     // Create the font and brush for drawing
-                    using (Font font = new Font("Arial", 128))
-                    using (Brush brush = new SolidBrush(Color.Green))
+                    //using (Font font = new Font("Gill Sans MT", 256))
+                    using (Font font = new Font(SystemFonts.CaptionFont.FontFamily, screenBounds.Height/6, FontStyle.Regular))
+                    using (Brush brush = new SolidBrush(Color.Black))
                     {
                         // Get the size of the string when drawn with the given font
                         SizeF stringSize = e.Graphics.MeasureString(currentScreenId.ToString(), font);
 
                         // Calculate the top-left point of the string to draw it centered in the form
                         float x = (form.Width - stringSize.Width) / 2;
-                        float y = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 4);
+                        float y = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 8);
 
                         // Draw the string
                         e.Graphics.DrawString(currentScreenId.ToString(), font, brush, new PointF(x, y));
                     }
                 };
+
+                screenForms.Add(form);
 
                 if (screen.Primary)
                 {
@@ -117,16 +129,51 @@ namespace KhBroDisplaySetup
                 screenIdForms.Add(form);
             }
 
+            Func<int, Form> selectScreenIdFormByScreenIndex = (screenIdx) => {
+                Form screenIdForm = screenIdForms[screenIdx-1];
+                screenIdForm.BackColor = selectedColor;
+                screenIdForm.Invalidate();
+                return screenIdForm;
+            };
+
+            Func<int, Form> unselectScreenIdFormByScreenIndex = (screenIdx) => {
+                Form screenIdForm = screenIdForms[screenIdx - 1];
+                screenIdForm.BackColor = unselectedColor;
+                screenIdForm.Invalidate();
+                return screenIdForm;
+            };
+
+            Func<TextBox, Form> selectScreenIdFormByTextboxValue = (input) => {
+                if (input.Text.Length > 0)
+                {
+                    return selectScreenIdFormByScreenIndex(Int32.Parse(input.Text));
+                }
+
+                return null;
+            };
+
+            Func<TextBox, Form> unselectScreenIdFormByTextboxValue = (input) => {
+                if (input.Text.Length > 0)
+                {
+                    return unselectScreenIdFormByScreenIndex(Int32.Parse(input.Text));
+                }
+
+                return null;
+            };
+
             if (primaryForm != null)
             {
                 TextBox firstTextBox = null;
 
                 TextBox previouslyAddedTextBox = null;
 
-                int tbWidth = 70;
-                int tbMargin = 20;
+                int inputFontSize = primaryForm.Height / 14;
+
+                int tbWidth = (int)Math.Round(inputFontSize*2.4);
+                int tbMargin = (int)Math.Round(tbWidth * 0.2);
+
                 int screenCount = Screen.AllScreens.Count();
-                int intTbTotalWidth = (tbWidth + tbMargin) * screenCount;
+                int intTbTotalWidth = ((tbWidth + tbMargin) * screenCount) - tbMargin;
                 int startLeft = ((primaryForm.Width - (intTbTotalWidth)) / 2);
                 //int startLeft = 0;
 
@@ -137,24 +184,25 @@ namespace KhBroDisplaySetup
 
                 foreach (Screen screen in allScreens)
                 {
-
                     TextBox textBox = new()
                     {
-                        Font = new Font(FontFamily.GenericSansSerif, 48, FontStyle.Regular),
+                        //Font = new Font(FontFamily.GenericSansSerif, 64, FontStyle.Regular),
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, inputFontSize, FontStyle.Regular),
                         Width = tbWidth, // adjust as needed
-                        Location = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), 50), // adjust as needed
+                        Location = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), 128), // adjust as needed
                         Multiline = false,
                         MaxLength = 1,
                         BorderStyle = BorderStyle.None,
                         BackColor = Color.White,
                         ForeColor = Color.Black,
-                        Tag = textboxIndex
+                        Tag = textboxIndex,
+                        TextAlign = HorizontalAlignment.Center,
+                        Margin = new Padding(5, 0, 0, 20),
                     };
 
                     screenIdTextBoxList.Add(textBox);
 
                     TextBox previousTextBox = previouslyAddedTextBox;
-
 
                     textBox.KeyPress += (s, e) =>
                     {
@@ -166,12 +214,13 @@ namespace KhBroDisplaySetup
 
                         else if (char.IsDigit(e.KeyChar))
                         {
-                            int numericValue = int.Parse(e.KeyChar.ToString());
+                            int typedScreenIndex = int.Parse(e.KeyChar.ToString());
 
-                            if (numericValue < 0 || numericValue > maxScreens)
+                            if (typedScreenIndex < 0 || typedScreenIndex > maxScreens)
                             {
                                 e.Handled = true; // Cancel the character
                             }
+
 
                             for(int i = 0; i < screenIdTextBoxList.Count; i++)
                             {
@@ -180,18 +229,26 @@ namespace KhBroDisplaySetup
                                     if (screenIdTextBoxList[i].Text == e.KeyChar.ToString())
                                     {
                                         e.Handled = true; // Cancel the character
+                                        return;
                                     }
                                 }
                             }
+
+                            selectScreenIdFormByScreenIndex(typedScreenIndex);
                         }
                         else if (char.IsControl(e.KeyChar))
                         {
                             if (e.KeyChar != (char)Keys.Back)
                             {
                                 e.Handled = true; // Cancel the character
-                            } 
-                            else if (previousTextBox != null)
+                                return;
+                            }
+
+                            unselectScreenIdFormByTextboxValue(textBox);
+
+                            if (previousTextBox != null)
                             {
+                                unselectScreenIdFormByTextboxValue(previousTextBox);
                                 previousTextBox.Focus();
                                 previousTextBox.Text = "";
                             }
@@ -206,6 +263,7 @@ namespace KhBroDisplaySetup
                         // Empty this and subsequent textboxes
                         for (int i = (int)textBox.Tag; i < screenIdTextBoxList.Count; i++)
                         {
+                            unselectScreenIdFormByTextboxValue(screenIdTextBoxList[i]);
                             screenIdTextBoxList[i].Text = "";
                         }
 
