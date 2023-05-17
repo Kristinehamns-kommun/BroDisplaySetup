@@ -119,9 +119,9 @@ namespace KhBroDisplaySetup
 
             if (primaryForm != null)
             {
-                System.Windows.Forms.TextBox firstTextBox = null;
+                TextBox firstTextBox = null;
 
-                System.Windows.Forms.TextBox previouslyAddedTextBox = null;
+                TextBox previouslyAddedTextBox = null;
 
                 int tbWidth = 70;
                 int tbMargin = 20;
@@ -130,13 +130,15 @@ namespace KhBroDisplaySetup
                 int startLeft = ((primaryForm.Width - (intTbTotalWidth)) / 2);
                 //int startLeft = 0;
 
-
                 int textboxIndex = 0;
 
-                foreach (Screen screen in Screen.AllScreens)
+                Screen[] allScreens = Screen.AllScreens;
+                int maxScreens = allScreens.Count();
+
+                foreach (Screen screen in allScreens)
                 {
 
-                    System.Windows.Forms.TextBox textBox = new System.Windows.Forms.TextBox
+                    TextBox textBox = new()
                     {
                         Font = new Font(FontFamily.GenericSansSerif, 48, FontStyle.Regular),
                         Width = tbWidth, // adjust as needed
@@ -146,12 +148,12 @@ namespace KhBroDisplaySetup
                         BorderStyle = BorderStyle.None,
                         BackColor = Color.White,
                         ForeColor = Color.Black,
-                        Tag = screen.DeviceName
+                        Tag = textboxIndex
                     };
 
                     screenIdTextBoxList.Add(textBox);
 
-                    System.Windows.Forms.TextBox previousTextBox = previouslyAddedTextBox;
+                    TextBox previousTextBox = previouslyAddedTextBox;
 
 
                     textBox.KeyPress += (s, e) =>
@@ -161,24 +163,69 @@ namespace KhBroDisplaySetup
                         {
                             e.Handled = true; // Cancel the character
                         }
+
+                        else if (char.IsDigit(e.KeyChar))
+                        {
+                            int numericValue = int.Parse(e.KeyChar.ToString());
+
+                            if (numericValue < 0 || numericValue > maxScreens)
+                            {
+                                e.Handled = true; // Cancel the character
+                            }
+
+                            for(int i = 0; i < screenIdTextBoxList.Count; i++)
+                            {
+                                if (i != (int)((TextBox)s).Tag)
+                                {
+                                    if (screenIdTextBoxList[i].Text == e.KeyChar.ToString())
+                                    {
+                                        e.Handled = true; // Cancel the character
+                                    }
+                                }
+                            }
+                        }
+                        else if (char.IsControl(e.KeyChar))
+                        {
+                            if (e.KeyChar != (char)Keys.Back)
+                            {
+                                e.Handled = true; // Cancel the character
+                            } 
+                            else if (previousTextBox != null)
+                            {
+                                previousTextBox.Focus();
+                                previousTextBox.Text = "";
+                            }
+                        }
+                    };
+
+                    textBox.GotFocus += (s, e) =>
+                    {
+                        // TextBox has received focus and therefore
+                        // the user has clicked on it or tabbed to it
+
+                        // Empty this and subsequent textboxes
+                        for (int i = (int)textBox.Tag; i < screenIdTextBoxList.Count; i++)
+                        {
+                            screenIdTextBoxList[i].Text = "";
+                        }
+
+                        // If any previous textbox is empty, then focus on it
+                        if (previousTextBox != null && previousTextBox.Text.Trim().Length == 0)
+                        {
+                            previousTextBox.Focus();
+                        }
                     };
 
                     if (previousTextBox != null)
                     {
-                        textBox.KeyUp += (s, e) =>
-                        {
-                            if (e.KeyCode == Keys.Back)
-                            {
-                                previousTextBox.Focus();
-                                //System.Diagnostics.Debug.WriteLine("Move back on keyup");
-                            }
-                        };
-
                         previousTextBox.KeyUp += (s, e) =>
                         {
                             if (e.KeyCode != Keys.Back)
                             {
-                                textBox.Focus();
+                                if (((TextBox)s).Text.Trim().Length > 0) {
+                                    textBox.Focus();
+                                }
+                                
                                 //System.Diagnostics.Debug.WriteLine("Next on keyup");
                             }
                         };
@@ -211,6 +258,11 @@ namespace KhBroDisplaySetup
                 {
                     lastTextBox.KeyUp += (s, e) =>
                     {
+                        if (((TextBox)s).Text.Trim().Length == 0)
+                        {
+                            return;
+                        }
+
                         var screens = Screen.AllScreens;
                         List<String> userOrderedDeviceNames = new List<String>();
 

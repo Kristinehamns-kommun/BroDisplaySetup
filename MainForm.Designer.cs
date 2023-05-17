@@ -36,9 +36,9 @@ namespace KhBroDisplaySetup
             // 
             // btnManualArrangeDisplays
             // 
-            btnManualArrangeDisplays.Location = new System.Drawing.Point(59, 12);
+            btnManualArrangeDisplays.Location = new System.Drawing.Point(58, 12);
             btnManualArrangeDisplays.Name = "btnManualArrangeDisplays";
-            btnManualArrangeDisplays.Size = new System.Drawing.Size(195, 23);
+            btnManualArrangeDisplays.Size = new System.Drawing.Size(205, 33);
             btnManualArrangeDisplays.TabIndex = 0;
             btnManualArrangeDisplays.Text = "Konfigurera skärmar manuellt";
             btnManualArrangeDisplays.UseVisualStyleBackColor = true;
@@ -46,9 +46,9 @@ namespace KhBroDisplaySetup
             // 
             // btnScreenInfo
             // 
-            btnScreenInfo.Location = new System.Drawing.Point(59, 80);
+            btnScreenInfo.Location = new System.Drawing.Point(58, 108);
             btnScreenInfo.Name = "btnScreenInfo";
-            btnScreenInfo.Size = new System.Drawing.Size(195, 24);
+            btnScreenInfo.Size = new System.Drawing.Size(205, 27);
             btnScreenInfo.TabIndex = 1;
             btnScreenInfo.Text = "Visa skärminformation...";
             btnScreenInfo.UseVisualStyleBackColor = true;
@@ -56,9 +56,9 @@ namespace KhBroDisplaySetup
             // 
             // btnAutoArrangeDisplays
             // 
-            btnAutoArrangeDisplays.Location = new System.Drawing.Point(59, 38);
+            btnAutoArrangeDisplays.Location = new System.Drawing.Point(58, 51);
             btnAutoArrangeDisplays.Name = "btnAutoArrangeDisplays";
-            btnAutoArrangeDisplays.Size = new System.Drawing.Size(195, 23);
+            btnAutoArrangeDisplays.Size = new System.Drawing.Size(205, 33);
             btnAutoArrangeDisplays.TabIndex = 2;
             btnAutoArrangeDisplays.Text = "Konfigurera skärmar automatiskt";
             btnAutoArrangeDisplays.UseVisualStyleBackColor = true;
@@ -68,7 +68,7 @@ namespace KhBroDisplaySetup
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(316, 118);
+            ClientSize = new System.Drawing.Size(316, 147);
             Controls.Add(btnAutoArrangeDisplays);
             Controls.Add(btnScreenInfo);
             Controls.Add(btnManualArrangeDisplays);
