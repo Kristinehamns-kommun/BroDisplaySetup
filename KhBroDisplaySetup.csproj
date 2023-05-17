@@ -5,6 +5,12 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+	<Version>1.0.0-beta</Version>
+	<AssemblyVersion>1.0.0.0</AssemblyVersion>
+	<FileVersion>1.0.0.0</FileVersion>
+	<Authors>Joe Siponen</Authors>
+	<Copyright>Copyright (c) Joe Siponen</Copyright>
+    <Company />
   </PropertyGroup>
 
   <ItemGroup>
