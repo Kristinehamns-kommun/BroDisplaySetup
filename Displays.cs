@@ -14,18 +14,18 @@ namespace KhBroDisplaySetup
         public static List<String> GetAutoArrangedLTRScreenDeviceNames()
         {
             List<Screen> screenList = Screen.AllScreens.ToList();
-            List<Dictionary<string, string>> wmiMonitors = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
             List<string> autoArrangedScreenDeviceNames = new List<string>();
 
-            foreach (var wmiMonitor in wmiMonitors)
+            foreach (var monitorInfo in monitorInfoList)
             {
-                if (wmiMonitor.ContainsKey("Internal") && wmiMonitor["Internal"].Equals("Yes"))
+                if (monitorInfo.ContainsKey("Internal") && monitorInfo["Internal"].Equals("Yes"))
                 {
-                    autoArrangedScreenDeviceNames.Add(wmiMonitor["DeviceName"]);
-                    Screen removePrimaryScreen = screenList.Find(s => s.DeviceName.ToUpper().Equals(wmiMonitor["DeviceName"].ToUpper()));
+                    autoArrangedScreenDeviceNames.Add(monitorInfo["DeviceName"]);
+                    Screen removePrimaryScreen = screenList.Find(s => s.DeviceName.ToUpper().Equals(monitorInfo["DeviceName"].ToUpper()));
 
                     //assert that removePrimaryScreen is not null
-                    Debug.Assert(removePrimaryScreen != null);
+                    Debug.Assert(removePrimaryScreen != null, "Did not find primary screen");
 
                     screenList.Remove(removePrimaryScreen);
                     break;
@@ -39,7 +39,7 @@ namespace KhBroDisplaySetup
             }
 
             //Assert that count of arrangedScreenDevices is equal to count of Screen.AllScreens
-            Debug.Assert(autoArrangedScreenDeviceNames.Count == Screen.AllScreens.Count());
+            Debug.Assert(autoArrangedScreenDeviceNames.Count == Screen.AllScreens.Count(), "Missing screen device names");
 
             return autoArrangedScreenDeviceNames;
         }
@@ -240,17 +240,17 @@ namespace KhBroDisplaySetup
         }
 
         public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
-            List<Dictionary<string, string>> wmiMonitors = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
             int primaryDisplayIndex = 0;
 
             foreach (var deviceName in screenDeviceNamesLTR)
             {
                 bool displayInternal = false;
 
-                foreach(var wmiMonitor in wmiMonitors)
+                foreach(var monitorInfo in monitorInfoList)
                 {
-                    if (wmiMonitor["DeviceName"].Equals(deviceName)) {
-                        if (wmiMonitor.ContainsKey("Internal") && wmiMonitor["Internal"].Equals("Yes"))
+                    if (monitorInfo["DeviceName"].Equals(deviceName)) {
+                        if (monitorInfo.ContainsKey("Internal") && monitorInfo["Internal"].Equals("Yes"))
                         {
                             displayInternal = true;
                         }

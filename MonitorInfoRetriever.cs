@@ -18,7 +18,7 @@ namespace KhBroDisplaySetup
         //    }
         //}
 
-        public static List<Dictionary<string, string>> GetWmiMonitorsWithDisplayDeviceName()
+        public static List<Dictionary<string, string>> GetMonitorInfoForAllConnectedDisplayDevices()
         {
             var displayPnpIdToDisplayName = Extern.Displays.GetDisplayDeviceIdToDisplayDeviceNameMapping();
             foreach (KeyValuePair<string, string> kvp in displayPnpIdToDisplayName)

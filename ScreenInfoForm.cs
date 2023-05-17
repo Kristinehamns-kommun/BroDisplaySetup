@@ -19,13 +19,13 @@ namespace KhBroDisplaySetup
 
         private void ScreenInfoForm_Load(object sender, EventArgs e)
         {
-            List<Dictionary<string, string>> displayWmi = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
 
             List<string> screenInfo = new();
 
-            foreach (var disp in displayWmi)
+            foreach (var monitorInfo in monitorInfoList)
             {
-                foreach (KeyValuePair<string, string> kvp in disp)
+                foreach (KeyValuePair<string, string> kvp in monitorInfo)
                 {
                     //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
                     screenInfo.Add(kvp.Key + ": \"" + kvp.Value + "\"");
