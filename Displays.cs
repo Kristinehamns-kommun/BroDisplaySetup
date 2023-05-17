@@ -11,10 +11,43 @@ namespace KhBroDisplaySetup
 {
     class Displays
     {
+        public static List<String> GetAutoArrangedLTRScreenDeviceNames()
+        {
+            List<Screen> screenList = Screen.AllScreens.ToList();
+            List<Dictionary<string, string>> wmiMonitors = MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            List<string> autoArrangedScreenDeviceNames = new List<string>();
+
+            foreach (var wmiMonitor in wmiMonitors)
+            {
+                if (wmiMonitor.ContainsKey("Internal") && wmiMonitor["Internal"].Equals("Yes"))
+                {
+                    autoArrangedScreenDeviceNames.Add(wmiMonitor["DeviceName"]);
+                    Screen removePrimaryScreen = screenList.Find(s => s.DeviceName.ToUpper().Equals(wmiMonitor["DeviceName"].ToUpper()));
+
+                    //assert that removePrimaryScreen is not null
+                    Debug.Assert(removePrimaryScreen != null);
+
+                    screenList.Remove(removePrimaryScreen);
+                    break;
+                }
+            }
+
+            // Add the remaining screens to the arrangedScreenDevices list:
+            foreach (var screen in screenList)
+            {
+                autoArrangedScreenDeviceNames.Add(screen.DeviceName);
+            }
+
+            //Assert that count of arrangedScreenDevices is equal to count of Screen.AllScreens
+            Debug.Assert(autoArrangedScreenDeviceNames.Count == Screen.AllScreens.Count());
+
+            return autoArrangedScreenDeviceNames;
+        }
+
         public static void ArrangeAutomaticallyFromLTRWithAutoResolution()
         {
             Extern.Displays.SwitchToExtendModeIfClone();
-            ArrangeLTRWithAutoPrimary(MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName().Select(i => i["DeviceName"]).ToList());
+            ArrangeLTRWithAutoPrimary(GetAutoArrangedLTRScreenDeviceNames());
         }
 
         public static void ArrangeManuallyFromLTRWithAutoResolution()
@@ -31,8 +64,18 @@ namespace KhBroDisplaySetup
 
             int screenIndex = 0;
 
+            Dictionary<String, Screen> screenDeviceNameToScreenMap = new Dictionary<string, Screen>();
+            // Map the screen device names to the screens:
             foreach (Screen screen in Screen.AllScreens)
             {
+                screenDeviceNameToScreenMap.Add(screen.DeviceName, screen);
+            }
+
+            List<String> initialArrangement = GetAutoArrangedLTRScreenDeviceNames();
+
+            foreach (String screenDeviceName in initialArrangement)
+            {
+                Screen screen = screenDeviceNameToScreenMap[screenDeviceName];
                 screenIndex++;
                 int currentScreenId = screenIndex;
                 Rectangle screenBounds = screen.Bounds;
@@ -175,8 +218,8 @@ namespace KhBroDisplaySetup
                         foreach (var screenIdTb in screenIdTextBoxList)
                         {
                             int screenId = Int32.Parse(screenIdTb.Text);
-                            System.Diagnostics.Debug.WriteLine(screens[screenId - 1].DeviceName + " is screen " + screenOrder);
-                            userOrderedDeviceNames.Add(screens[screenId - 1].DeviceName);
+                            System.Diagnostics.Debug.WriteLine(initialArrangement[screenId - 1] + " is screen " + screenOrder);
+                            userOrderedDeviceNames.Add(initialArrangement[screenId - 1]);
                             screenOrder++;
                         }
 
