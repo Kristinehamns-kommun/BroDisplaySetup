@@ -163,6 +163,32 @@ namespace KhBroDisplaySetup
 
             if (primaryForm != null)
             {
+                int closeButtonSize = 60;
+                Button closeButton = new Button();
+                closeButton.Text = "X";
+                closeButton.TextAlign = ContentAlignment.MiddleCenter;
+                closeButton.Font = new Font("Arial", 16, FontStyle.Bold);
+                closeButton.Size = new Size(closeButtonSize, closeButtonSize);
+                closeButton.Location = new Point(primaryForm.Width - closeButton.Width - closeButtonSize, closeButtonSize);
+
+                closeButton.Click += (s, e) =>
+                {
+                    screenIdForms.ForEach(f => {
+                        if (f != primaryForm)
+                        {
+                            f.Dispose();
+                        }
+
+                        primaryForm.Dispose();
+                    });
+                };
+                primaryForm.Controls.Add(closeButton);
+
+                // Create a MenuStrip control for the menu bar
+                //MenuStrip menuStrip = new MenuStrip();
+                //menuStrip.Dock = DockStyle.Top;
+                //primaryForm.Controls.Add(menuStrip);
+
                 TextBox firstTextBox = null;
 
                 TextBox previouslyAddedTextBox = null;
