@@ -34,7 +34,7 @@ namespace KhBroDisplaySetup
             var searcher = new ManagementObjectSearcher(scope, query);
             var monitorInfoList = searcher.Get();
 
-            Dictionary<string, Extern.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> displayOutputTechnologies = Extern.Displays.GetVideoOutputTechnologyByDevicePath();
+            Dictionary<string, Extern.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> displayOutputTechnologies = Extern.Displays.GetVideoOutputTechnologyByDevicePathMap();
 
             foreach(var tech in displayOutputTechnologies)
             {
@@ -54,6 +54,8 @@ namespace KhBroDisplaySetup
 
                 string matchUser32DeviceId = monitorPnpDeviceId.Replace("\\", "#");
                 matchUser32DeviceId = "\\\\?\\" + matchUser32DeviceId;
+
+                
 
                 String outputTechnology = "Unknown";
                 String internalMonitor = "Unknown";
@@ -105,6 +107,9 @@ namespace KhBroDisplaySetup
                 String deviceName = displayPnpIdToDisplayName[user32DeviceId];
 
                 limitedMonitorInfo.Add("DeviceName", deviceName);
+
+                DEVMODE currentDevMode = Extern.Displays.GetCurrentDisplayMode(deviceName);
+                limitedMonitorInfo.Add("Bounds", currentDevMode.dmPosition.x + ", " + currentDevMode.dmPosition.y + ", " + currentDevMode.dmPelsWidth + ", " + currentDevMode.dmPelsHeight);
 
                 Extern.DEVMODE optimalDevMode = Extern.Displays.GetOptimalDisplayMode(deviceName);
 

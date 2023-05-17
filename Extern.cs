@@ -873,7 +873,7 @@ namespace KhBroDisplaySetup
 
             }
 
-            public static Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> GetVideoOutputTechnologyByDevicePath()
+            public static Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> GetVideoOutputTechnologyByDevicePathMap()
             {
                 var result = new Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY>();
                 foreach(var keyVal in AllActiveDisplayConfigPathsByTargetDeviceName())
@@ -950,12 +950,13 @@ namespace KhBroDisplaySetup
                 primaryDevMode.dmPosition.x = 0;
                 primaryDevMode.dmPosition.y = 0;
 
-                Console.WriteLine("Set primary " + primaryDisplayName + " to " + primaryDevMode.dmPosition.x + "," + primaryDevMode.dmPosition.y);
+                System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + primaryDevMode.dmPosition.x + "," + primaryDevMode.dmPosition.y);
                 User_32.ChangeDisplaySettingsEx(primaryDisplayName, ref primaryDevMode, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_SET_PRIMARY | ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET, IntPtr.Zero);
 
                 IntPtr nullPtr = IntPtr.Zero;
                 int positionX = 0;
                 int positionY = 0;
+                uint primaryDevHeight = primaryDevMode.dmPelsHeight;
 
                 Array.Reverse(leftDisplayNames);
                 foreach (string displayName in leftDisplayNames)
@@ -972,9 +973,9 @@ namespace KhBroDisplaySetup
                     positionX -= (int)GetCurrentResolutionWidth(displayName);
                     devMode.dmFields |= DM_POSITION;
                     devMode.dmPosition.x = positionX;
-                    devMode.dmPosition.y = positionY;
+                    devMode.dmPosition.y = (int)Math.Max(0, primaryDevHeight - devMode.dmPelsHeight);
 
-                    Console.WriteLine("Set left " + displayName + " to " + devMode.dmPosition.x + "," + devMode.dmPosition.y);
+                    System.Diagnostics.Debug.WriteLine("Set left " + displayName + " to " + devMode.dmPosition.x + "," + devMode.dmPosition.y);
 
                     User_32.ChangeDisplaySettingsEx(
                         displayName,
@@ -999,8 +1000,8 @@ namespace KhBroDisplaySetup
 
                     devMode.dmFields |= DM_POSITION;
                     devMode.dmPosition.x = positionX;
-                    devMode.dmPosition.y = positionY;
-                    Console.WriteLine("Set right " + displayName + " to " + positionX + "," + positionY);
+                    devMode.dmPosition.y = (int)Math.Max(0, primaryDevHeight - devMode.dmPelsHeight);
+                    System.Diagnostics.Debug.WriteLine("Set right " + displayName + " to " + positionX + "," + positionY);
 
                     User_32.ChangeDisplaySettingsEx(
                         displayName,
