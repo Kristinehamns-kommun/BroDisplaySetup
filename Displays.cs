@@ -50,12 +50,12 @@ namespace KhBroDisplaySetup
             ArrangeLTRWithAutoPrimary(GetAutoArrangedLTRScreenDeviceNames());
         }
 
-        public static void ArrangeManuallyFromLTRWithAutoResolution()
+        public static Form ArrangeManuallyFromLTRWithAutoResolution()
         {
             Extern.Displays.SwitchToExtendModeIfClone();
-            ConfigureDisplayOrderAndArrange();
+            return ConfigureDisplayOrderAndArrange();
         }
-        public static void ConfigureDisplayOrderAndArrange()
+        public static Form ConfigureDisplayOrderAndArrange()
         {
             List<Form> screenIdForms = new List<Form>();
             List<TextBox> screenIdTextBoxList = new List<TextBox>();
@@ -163,31 +163,17 @@ namespace KhBroDisplaySetup
 
             if (primaryForm != null)
             {
-                int closeButtonSize = 60;
-                Button closeButton = new Button();
-                closeButton.Text = "X";
-                closeButton.TextAlign = ContentAlignment.MiddleCenter;
-                closeButton.Font = new Font("Arial", 16, FontStyle.Bold);
-                closeButton.Size = new Size(closeButtonSize, closeButtonSize);
-                closeButton.Location = new Point(primaryForm.Width - closeButton.Width - closeButtonSize, closeButtonSize);
 
-                closeButton.Click += (s, e) =>
+                primaryForm.Closed += (s, e) =>
                 {
                     screenIdForms.ForEach(f => {
                         if (f != primaryForm)
                         {
+                            f.Close();
                             f.Dispose();
                         }
-
-                        primaryForm.Dispose();
                     });
                 };
-                primaryForm.Controls.Add(closeButton);
-
-                // Create a MenuStrip control for the menu bar
-                //MenuStrip menuStrip = new MenuStrip();
-                //menuStrip.Dock = DockStyle.Top;
-                //primaryForm.Controls.Add(menuStrip);
 
                 TextBox firstTextBox = null;
 
@@ -245,6 +231,7 @@ namespace KhBroDisplaySetup
                             if (typedScreenIndex < 0 || typedScreenIndex > maxScreens)
                             {
                                 e.Handled = true; // Cancel the character
+                                return;
                             }
 
 
@@ -330,9 +317,6 @@ namespace KhBroDisplaySetup
 
                 TextBox lastTextBox = previouslyAddedTextBox;
 
-                primaryForm.BringToFront();
-                primaryForm.Focus();
-
                 if (firstTextBox != null)
                 {
                     firstTextBox.Focus();
@@ -359,20 +343,18 @@ namespace KhBroDisplaySetup
                             screenOrder++;
                         }
 
-                        screenIdForms.ForEach(f => {
-                            if (f != primaryForm)
-                            {
-                                f.Dispose();
-                            }
-
-                            primaryForm.Dispose();
-                        });
+                        primaryForm.Close();
 
                         ArrangeLTRWithAutoPrimary(userOrderedDeviceNames);
                     };
                 }
 
+                primaryForm.BringToFront();
+                primaryForm.Focus();
+                return primaryForm;
             }
+
+            return null;
         }
 
         public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
