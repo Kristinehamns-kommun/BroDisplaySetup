@@ -19,6 +19,8 @@ namespace KhBroDisplaySetup
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            string programName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
+
             Form appForm = Displays.ArrangeManuallyFromLTRWithAutoResolution();
 
             appForm.Paint += (s, e) =>
@@ -44,11 +46,25 @@ namespace KhBroDisplaySetup
             ToolStripMenuItem showScreenInfoMenuItem = new ToolStripMenuItem("Visa skärminformation...");
             advancedMenuItem.DropDownItems.Add(showScreenInfoMenuItem);
 
+            ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("?");
+
+            ToolStripMenuItem aboutMenuItem = new ToolStripMenuItem($"About {programName}");
+            helpMenuItem.DropDownItems.Add(aboutMenuItem);
+
+            menuStrip.Items.Add(helpMenuItem);
+            
             showScreenInfoMenuItem.Click += (s, e) =>
             {
                 // Create and show the new form for screen info
                 ScreenInfoForm screenInfoForm = new ScreenInfoForm();
                 screenInfoForm.ShowDialog();
+            };
+
+            aboutMenuItem.Click += (s, e) =>
+            {
+                // Create and show the new form for about
+                About aboutForm = new About();
+                aboutForm.ShowDialog();
             };
 
             appForm.Controls.Add(menuStrip);

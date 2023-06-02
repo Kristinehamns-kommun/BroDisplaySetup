@@ -61,6 +61,19 @@ namespace KhBroDisplaySetup.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+        ///
+        ///This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+        ///
+        ///You should have received a copy o [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string GPLv3 {
+            get {
+                return ResourceManager.GetString("GPLv3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Kristinehamn_CMYK {
