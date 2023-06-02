@@ -94,6 +94,8 @@ namespace KhBroDisplaySetup
                 form.TopMost = false;
                 form.BackColor = unselectedColor;
                 form.Show();
+
+                // Draw numbers on screens
                 form.Paint += (s, e) =>
                 {
                     e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
@@ -124,6 +126,31 @@ namespace KhBroDisplaySetup
                 if (screen.Primary)
                 {
                     primaryForm = form;
+
+                    // Draw help text on primary screen
+                    
+                    form.Paint += (s, e) =>
+                    {
+                        string helpText = "Skriv in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).\nProgrammet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.\n\nExempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och\ndet står 1-3-2 på skärmarna (från vänster till höger) skriver du in 1-3-2";
+
+                        // Create the font and brush for drawing
+                        //using (Font font = new Font("Gill Sans MT", 256))
+
+
+                        using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, (float)(SystemFonts.DefaultFont.SizeInPoints*2), FontStyle.Regular))
+                        using (Brush brush = new SolidBrush(Color.Black))
+                        {
+                            // Get the size of the string when drawn with the given font
+                            SizeF stringSize = e.Graphics.MeasureString(helpText, font);
+                            // Calculate the top-left point of the string to draw it centered in the form
+                            //float x = (form.Width - stringSize.Width) / 2;
+                            float x = 40;
+                            //float y = ((form.Height - stringSize.Height) / 2) + (stringSize.Height / 2);
+                            float y = form.Height - stringSize.Height - 40;
+                            // Draw the string
+                            e.Graphics.DrawString(helpText, font, brush, new PointF(x, y));
+                        }
+                    };
                 }
 
                 screenIdForms.Add(form);
@@ -343,9 +370,13 @@ namespace KhBroDisplaySetup
                             screenOrder++;
                         }
 
-                        primaryForm.Close();
-
                         ArrangeLTRWithAutoPrimary(userOrderedDeviceNames);
+
+                        // Sleep 100ms
+                        System.Threading.Thread.Sleep(100);
+
+                        primaryForm.Close();
+                        
                     };
                 }
 
