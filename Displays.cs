@@ -50,15 +50,15 @@ namespace BroDisplaySetup
             ArrangeLTRWithAutoPrimary(GetAutoArrangedLTRScreenDeviceNames());
         }
 
-        public static Form ArrangeManuallyFromLTRWithAutoResolution()
+        public static Form ArrangeManuallyFromLTRWithAutoResolutionForm()
         {
             Extern.Displays.SwitchToExtendModeIfClone();
             return ConfigureDisplayOrderAndArrange();
         }
         public static Form ConfigureDisplayOrderAndArrange()
         {
-            List<Form> screenIdForms = new List<Form>();
-            List<TextBox> screenIdTextBoxList = new List<TextBox>();
+            List<Form> screenIdForms = new();
+            List<RoundedTextBox> screenIdTextBoxList = new();
 
             Form primaryForm = null;
 
@@ -163,7 +163,7 @@ namespace BroDisplaySetup
                 return screenIdForm;
             };
 
-            Func<int, Form> unselectScreenIdFormByScreenIndex = (screenIdx) => {
+            Func<int, Form> deselectScreenIdFormByScreenIndex = (screenIdx) => {
                 Form screenIdForm = screenIdForms[screenIdx - 1];
                 screenIdForm.BackColor = unselectedColor;
                 screenIdForm.Invalidate();
@@ -179,10 +179,10 @@ namespace BroDisplaySetup
                 return null;
             };
 
-            Func<TextBox, Form> unselectScreenIdFormByTextboxValue = (input) => {
+            Func<RoundedTextBox, Form> unselectScreenIdFormByTextboxValue = (input) => {
                 if (input.Text.Length > 0)
                 {
-                    return unselectScreenIdFormByScreenIndex(Int32.Parse(input.Text));
+                    return deselectScreenIdFormByScreenIndex(Int32.Parse(input.Text));
                 }
 
                 return null;
@@ -202,13 +202,13 @@ namespace BroDisplaySetup
                     });
                 };
 
-                TextBox firstTextBox = null;
+                RoundedTextBox firstTextBox = null;
 
-                TextBox previouslyAddedTextBox = null;
+                RoundedTextBox previouslyAddedTextBox = null;
 
                 int inputFontSize = primaryForm.Height / 14;
 
-                int tbWidth = (int)Math.Round(inputFontSize*2.4);
+                int tbWidth = (int)Math.Round(inputFontSize*2.1);
                 int tbMargin = (int)Math.Round(tbWidth * 0.2);
 
                 int screenCount = Screen.AllScreens.Count();
@@ -223,13 +223,12 @@ namespace BroDisplaySetup
 
                 foreach (Screen screen in allScreens)
                 {
-                    TextBox textBox = new()
+                    RoundedTextBox textBox = new()
                     {
                         //Font = new Font(FontFamily.GenericSansSerif, 64, FontStyle.Regular),
                         Font = new Font(SystemFonts.CaptionFont.FontFamily, inputFontSize, FontStyle.Regular),
                         Width = tbWidth, // adjust as needed
                         Location = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), 128), // adjust as needed
-                        Multiline = false,
                         MaxLength = 1,
                         BorderStyle = BorderStyle.None,
                         BackColor = Color.White,
@@ -241,7 +240,7 @@ namespace BroDisplaySetup
 
                     screenIdTextBoxList.Add(textBox);
 
-                    TextBox previousTextBox = previouslyAddedTextBox;
+                    RoundedTextBox previousTextBox = previouslyAddedTextBox;
 
                     textBox.KeyPress += (s, e) =>
                     {
@@ -264,7 +263,7 @@ namespace BroDisplaySetup
 
                             for(int i = 0; i < screenIdTextBoxList.Count; i++)
                             {
-                                if (i != (int)((TextBox)s).Tag)
+                                if (i != (int)((RoundedTextBox)s).Tag)
                                 {
                                     if (screenIdTextBoxList[i].Text == e.KeyChar.ToString())
                                     {
@@ -316,15 +315,17 @@ namespace BroDisplaySetup
 
                     if (previousTextBox != null)
                     {
+                        System.Diagnostics.Debug.WriteLine("Got keyup");
+
                         previousTextBox.KeyUp += (s, e) =>
                         {
                             if (e.KeyCode != Keys.Back)
                             {
-                                if (((TextBox)s).Text.Trim().Length > 0) {
+                                if (((RoundedTextBox)s).Text.Trim().Length > 0) {
                                     textBox.Focus();
                                 }
                                 
-                                //System.Diagnostics.Debug.WriteLine("Next on keyup");
+                                System.Diagnostics.Debug.WriteLine("Next on keyup");
                             }
                         };
                     }
@@ -342,7 +343,7 @@ namespace BroDisplaySetup
                     textboxIndex++;
                 }
 
-                TextBox lastTextBox = previouslyAddedTextBox;
+                RoundedTextBox lastTextBox = previouslyAddedTextBox;
 
                 if (firstTextBox != null)
                 {
@@ -353,7 +354,7 @@ namespace BroDisplaySetup
                 {
                     lastTextBox.KeyUp += (s, e) =>
                     {
-                        if (((TextBox)s).Text.Trim().Length == 0)
+                        if (((RoundedTextBox)s).Text.Trim().Length == 0)
                         {
                             return;
                         }

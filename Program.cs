@@ -21,7 +21,7 @@ namespace BroDisplaySetup
 
             string programName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
 
-            Form appForm = Displays.ArrangeManuallyFromLTRWithAutoResolution();
+            Form appForm = Displays.ArrangeManuallyFromLTRWithAutoResolutionForm();
 
             appForm.Paint += (s, e) =>
             {

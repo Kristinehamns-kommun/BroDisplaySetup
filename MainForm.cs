@@ -31,7 +31,7 @@ namespace BroDisplaySetup
 
         private void btnManualArrangeDisplays_Click(object sender, EventArgs e)
         {
-            Displays.ArrangeManuallyFromLTRWithAutoResolution();
+            Displays.ArrangeManuallyFromLTRWithAutoResolutionForm();
         }
 
         private void btnAutoArrangeDisplays_Click(object sender, EventArgs e)
