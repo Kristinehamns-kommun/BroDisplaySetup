@@ -19,19 +19,14 @@ namespace BroDisplaySetup
 
         private void ScreenInfoForm_Load(object sender, EventArgs e)
         {
-            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
 
             List<string> screenInfo = new();
-
-            foreach (var monitorInfo in monitorInfoList)
+            screenInfo.Add("--------------------------");
+            foreach (var displayInfo in displayInfoList)
             {
-                foreach (KeyValuePair<string, string> kvp in monitorInfo)
-                {
-                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-                    screenInfo.Add(kvp.Key + ": \"" + kvp.Value + "\"");
-                }
-
-                screenInfo.Add("--------------------------" + Environment.NewLine);
+                screenInfo.Add(displayInfo.ToString());
+                screenInfo.Add("--------------------------");
             }
 
             txtScreenInfo.Text = string.Join(Environment.NewLine, screenInfo);

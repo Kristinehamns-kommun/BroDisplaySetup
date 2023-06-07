@@ -14,18 +14,18 @@ namespace BroDisplaySetup
         public static List<String> GetAutoArrangedLTRScreenDeviceNames()
         {
             List<Screen> screenList = Screen.AllScreens.ToList();
-            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
             List<string> autoArrangedScreenDeviceNames = new List<string>();
 
-            foreach (var monitorInfo in monitorInfoList)
+            foreach (var displayInfo in displayInfoList)
             {
-                if (monitorInfo.ContainsKey("Internal") && monitorInfo["Internal"].Equals("Yes"))
+                if (displayInfo.Internal)
                 {
-                    autoArrangedScreenDeviceNames.Add(monitorInfo["DeviceName"]);
-                    Screen removePrimaryScreen = screenList.Find(s => s.DeviceName.ToUpper().Equals(monitorInfo["DeviceName"].ToUpper()));
+                    autoArrangedScreenDeviceNames.Add(displayInfo.DeviceName);
+                    Screen removePrimaryScreen = screenList.Find(s => s.DeviceName.ToUpper().Equals(displayInfo.DeviceName.ToUpper()));
 
                     //assert that removePrimaryScreen is not null
-                    Debug.Assert(removePrimaryScreen != null, "Did not find primary screen");
+                    Debug.Assert(removePrimaryScreen != null, "Current primary screen found");
 
                     screenList.Remove(removePrimaryScreen);
                     break;
@@ -39,7 +39,7 @@ namespace BroDisplaySetup
             }
 
             //Assert that count of arrangedScreenDevices is equal to count of Screen.AllScreens
-            Debug.Assert(autoArrangedScreenDeviceNames.Count == Screen.AllScreens.Count(), "Missing screen device names");
+            Debug.Assert(autoArrangedScreenDeviceNames.Count == Screen.AllScreens.Count(), "All screen device names processed/found");
 
             return autoArrangedScreenDeviceNames;
         }
@@ -389,17 +389,17 @@ namespace BroDisplaySetup
         }
 
         public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
-            List<Dictionary<string, string>> monitorInfoList = MonitorInfoRetriever.GetMonitorInfoForAllConnectedDisplayDevices();
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
             int primaryDisplayIndex = 0;
 
             foreach (var deviceName in screenDeviceNamesLTR)
             {
                 bool displayInternal = false;
 
-                foreach(var monitorInfo in monitorInfoList)
+                foreach(var displayInfo in displayInfoList)
                 {
-                    if (monitorInfo["DeviceName"].Equals(deviceName)) {
-                        if (monitorInfo.ContainsKey("Internal") && monitorInfo["Internal"].Equals("Yes"))
+                    if (displayInfo.DeviceName.ToUpper().Equals(deviceName.ToUpper())) {
+                        if (displayInfo.Internal)
                         {
                             displayInternal = true;
                         }

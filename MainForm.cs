@@ -24,7 +24,7 @@ namespace BroDisplaySetup
 
         private void btnScreenInfo_Click(object sender, EventArgs e)
         {
-            //MonitorInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
+            //displayInfoRetriever.GetWmiMonitorsWithDisplayDeviceName();
             ScreenInfoForm screenInfoForm = new ScreenInfoForm();
             screenInfoForm.Show();
         }
