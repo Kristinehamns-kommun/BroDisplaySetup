@@ -5,7 +5,7 @@ using System.Threading;
 using System.ComponentModel;
 using System.IO;
 
-namespace KhBroDisplaySetup 
+namespace BroDisplaySetup 
 { 
     namespace Extern
     {

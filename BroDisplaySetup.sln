@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31911.196
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KhBroDisplaySetup", "KhBroDisplaySetup.csproj", "{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BroDisplaySetup", "BroDisplaySetup.csproj", "{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

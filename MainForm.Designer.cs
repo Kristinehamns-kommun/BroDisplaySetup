@@ -1,5 +1,5 @@
 ﻿
-namespace KhBroDisplaySetup
+namespace BroDisplaySetup
 {
     partial class MainForm
     {
