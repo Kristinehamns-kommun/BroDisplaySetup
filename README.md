@@ -37,6 +37,11 @@ Screens that are connected while the program is running will not be detected aut
 
 The program has no handling for screens that are disconnected while it is running. To detect disconnected screens, restart the program. 
 
+## Screenshots
+
+![alt text](./screenshots/screens_start.png "Start screen")
+![alt text](./screenshots/screens_typed.png "Typed screens")
+
 ## Contributing
 
 Contributions are welcome! If you want to contribute to BroDisplaySetup, follow these guidelines:
@@ -51,5 +56,7 @@ Contributions are welcome! If you want to contribute to BroDisplaySetup, follow 
 ## License
 
 BroDisplaySetup is released under the [GNU General Public License](LICENSE.md).
+
+
 
 

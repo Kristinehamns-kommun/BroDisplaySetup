@@ -36,6 +36,11 @@ Skärmar som ansluts under tiden programmet körs kommer inte att upptäckas aut
 
 Programmet har ingen hantering för skärmar som kopplas bort under tiden som det körs. För att upptäcka bortkopplade skärmar, starta om programmet.
 
+## Screenshots
+
+![alt text](./screenshots/screens_start.png "Start")
+![alt text](./screenshots/screens_typed.png "Inmatade skärmar")
+
 ## Bidrag
 
 Bidrag är välkomna! Om du vill bidra till BroDisplaySetup, följ dessa riktlinjer:
@@ -50,3 +55,4 @@ Bidrag är välkomna! Om du vill bidra till BroDisplaySetup, följ dessa riktlin
 ## Licens
 
 BroDisplaySetup släpps under [GNU General Public License](LICENSE.md).
+
