@@ -22,6 +22,14 @@ För att använda BroDisplaySetup, följ dessa steg:
     - Den externa bildskärmen längst till vänster kommer automatiskt att bli den primära bildskärmen (Laptopens interna bildskärm kommer aldrig att bli primär om det finns en eller flera externa bildskärmar). 
 1. Rekommenderad (optimal) upplösning för alla anslutna skärmar tillämpas automatiskt.
 
+## Kompatibilitet
+
+BroDisplaySetup är kompatibelt med Windows 10 och Windows 11.
+
+Programmet har testats med laptops från HP samt med skärmar från Dell och HP.
+
+Mer testning med andra typer av hårdvara behövs men fungerar bra för de enheter som används på Kristinehamns kommun.
+
 ## Kända problem
 
 Skärmar som ansluts under tiden programmet körs kommer inte att upptäckas automatiskt. För att upptäcka nya skärmar, starta om programmet.

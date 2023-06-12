@@ -23,6 +23,14 @@ To use BroDisplaySetup, follow these steps:
     - The external monitor furthest to the left will automatically become the primary monitor (The laptop's internal monitor will never become primary if there is one or more external monitors).
 1. Recommended (optimal) resolution for all connected screens is automatically applied.
 
+## Compatibility
+
+BroDisplaySetup is compatible with Windows 10 and Windows 11.
+
+The program has been tested with laptops from HP and with screens from Dell and HP.
+
+More testing with other types of hardware is needed but works well for the devices used at Kristinehamn municipality.
+
 ## Known issues
 
 Screens that are connected while the program is running will not be detected automatically. To detect new screens, restart the program.
@@ -43,3 +51,5 @@ Contributions are welcome! If you want to contribute to BroDisplaySetup, follow 
 ## License
 
 BroDisplaySetup is released under the [GNU General Public License](LICENSE.md).
+
+
