@@ -13,7 +13,7 @@ För att använda BroDisplaySetup, följ dessa steg:
 1. Starta BroDisplaySetup-programmet.
     - Programmet upptäcker alla anslutna skärmar automatiskt och en optimal upplösning för varje skärm hämtas från Windows.
     - Skrivbordet utökas automatiskt till alla anslutna skärmar
-1. Varje ansluten skärm täcks av en ruta med en stor och tydlig siffra som identifierar skärmen
+1. Varje ansluten skärm täcks av en ruta med en stor och tydlig siffra som identifierar skärmen.
 1. Användaren presenteras med lika många textfält som skärmar där användaren uppmanas att skriva in siffrorna hen ser på skärmarna i den ordning man läser dem (från vänster till höger)
     - Exempel: Om det finns tre anslutna skärmar (inkl. den bärbara uppfälld) och det står 2-3-1 på skärmarna (från vänster till höger) förväntas man skriva in 2 3 1.
 

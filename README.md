@@ -15,8 +15,8 @@ To use BroDisplaySetup, follow these steps:
     - The desktop is automatically extended to all connected screens
 
 1. Each connected screen is covered by a box with a large and clear number that identifies the screen
-1. The user is presented with as many text fields as screens where the user is prompted to enter the numbers he sees on the screens in the order he reads them (from left to right)
-    - Example: If there are three connected screens (incl. the laptop folded up) and it says 2-3-1 on the screens (from left to right) you are expected to enter 2 3 1.
+1. The user is presented with a text field for each screen (on the current primary screen) and prompted to enter the numbers as they appear on the screens, following the order they are read in.
+    - Example: If there are three connected screens (incl. the laptop folded up) and it says 2-3-1 on the screens (from left to right) you are expected to type 2 3 1 to fill in the text fields.
 
 1. The screens are arranged from left to right in the order that the user specified for the extended desktop.
     - All screens are positioned so that the bottom edge of the screens are aligned with each other.
