@@ -91,7 +91,7 @@ class RoundedTextBox : UserControl
         set
         {
             base.Location = value;
-            textBox.Location = new Point(paddingLeft, paddingTop);3
+            textBox.Location = new Point(paddingLeft, paddingTop);
         }
     }
 

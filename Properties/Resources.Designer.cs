@@ -82,5 +82,19 @@ namespace BroDisplaySetup.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Skriv in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger). 
+        ///
+        ///Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+        ///
+        ///Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+        ///det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1..
+        /// </summary>
+        internal static string ShortHelp {
+            get {
+                return ResourceManager.GetString("ShortHelp", resourceCulture);
+            }
+        }
     }
 }

@@ -53,14 +53,15 @@ namespace BroDisplaySetup
         public static Form ArrangeManuallyFromLTRWithAutoResolutionForm()
         {
             Extern.Displays.SwitchToExtendModeIfClone();
-            return ConfigureDisplayOrderAndArrange();
+            return ConfigureDisplayOrderAndArrangeForm();
         }
-        public static Form ConfigureDisplayOrderAndArrange()
+        public static Form ConfigureDisplayOrderAndArrangeForm()
         {
             List<Form> screenIdForms = new();
             List<RoundedTextBox> screenIdTextBoxList = new();
 
             Form primaryForm = null;
+            int primarySceenIdTextY = 0;
 
             int screenIndex = 0;
 
@@ -72,8 +73,6 @@ namespace BroDisplaySetup
             }
 
             List<String> initialArrangement = GetAutoArrangedLTRScreenDeviceNames();
-
-            List<Form> screenForms = new List<Form>();
             
             Color khBroColor = Color.FromArgb(205, 236, 251);
             Color unselectedColor = SystemColors.ControlDark;
@@ -93,12 +92,11 @@ namespace BroDisplaySetup
                 form.Bounds = screen.Bounds;
                 form.TopMost = false;
                 form.BackColor = unselectedColor;
-                form.Show();
 
                 // Draw numbers on screens
-                form.Paint += (s, e) =>
+                using (Graphics formGraphics = form.CreateGraphics())
                 {
-                    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                    formGraphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
                     // Determine the number to display based on the device name
                     int displayIndex = screen.DeviceName.LastIndexOf("DISPLAY");
@@ -106,51 +104,38 @@ namespace BroDisplaySetup
 
                     // Create the font and brush for drawing
                     //using (Font font = new Font("Gill Sans MT", 256))
-                    using (Font font = new Font(SystemFonts.CaptionFont.FontFamily, screenBounds.Height/6, FontStyle.Regular))
-                    using (Brush brush = new SolidBrush(Color.Black))
+                    using (Font measureFont = new Font(SystemFonts.CaptionFont.FontFamily, screenBounds.Height / 6, FontStyle.Regular))
                     {
                         // Get the size of the string when drawn with the given font
-                        SizeF stringSize = e.Graphics.MeasureString(currentScreenId.ToString(), font);
+                        SizeF stringSize = formGraphics.MeasureString(currentScreenId.ToString(), measureFont);
 
                         // Calculate the top-left point of the string to draw it centered in the form
                         float x = (form.Width - stringSize.Width) / 2;
                         float y = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 8);
 
-                        // Draw the string
-                        e.Graphics.DrawString(currentScreenId.ToString(), font, brush, new PointF(x, y));
+                        if (screen.Primary)
+                        {
+                            primarySceenIdTextY = (int)y;
+                        }
+
+                        Font paintFont = (Font)measureFont.Clone();
+
+                        form.Paint += (s, e) =>
+                        {
+                            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+                            // Draw the string
+                            using (Brush brush = new SolidBrush(Color.Black))
+                            {
+                                e.Graphics.DrawString(currentScreenId.ToString(), paintFont, brush, new PointF(x, y));
+                            }
+                        };
                     }
                 };
-
-                screenForms.Add(form);
 
                 if (screen.Primary)
                 {
                     primaryForm = form;
-
-                    // Draw help text on primary screen
-                    
-                    form.Paint += (s, e) =>
-                    {
-                        string helpText = "Skriv in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).\nProgrammet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.\n\nExempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och\ndet står 1-3-2 på skärmarna (från vänster till höger) skriver du in 1-3-2";
-
-                        // Create the font and brush for drawing
-                        //using (Font font = new Font("Gill Sans MT", 256))
-
-
-                        using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, (float)(SystemFonts.DefaultFont.SizeInPoints*2), FontStyle.Regular))
-                        using (Brush brush = new SolidBrush(Color.Black))
-                        {
-                            // Get the size of the string when drawn with the given font
-                            SizeF stringSize = e.Graphics.MeasureString(helpText, font);
-                            // Calculate the top-left point of the string to draw it centered in the form
-                            //float x = (form.Width - stringSize.Width) / 2;
-                            float x = 40;
-                            //float y = ((form.Height - stringSize.Height) / 2) + (stringSize.Height / 2);
-                            float y = form.Height - stringSize.Height - 40;
-                            // Draw the string
-                            e.Graphics.DrawString(helpText, font, brush, new PointF(x, y));
-                        }
-                    };
                 }
 
                 screenIdForms.Add(form);
@@ -214,7 +199,6 @@ namespace BroDisplaySetup
                 int screenCount = Screen.AllScreens.Count();
                 int intTbTotalWidth = ((tbWidth + tbMargin) * screenCount) - tbMargin;
                 int startLeft = ((primaryForm.Width - (intTbTotalWidth)) / 2);
-                //int startLeft = 0;
 
                 int textboxIndex = 0;
 
@@ -223,12 +207,14 @@ namespace BroDisplaySetup
 
                 foreach (Screen screen in allScreens)
                 {
+                    Point textboxLoc = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), primarySceenIdTextY - inputFontSize);
+                    textboxLoc.Offset(0, -((textboxLoc.Y)/2));
+
                     RoundedTextBox textBox = new()
                     {
-                        //Font = new Font(FontFamily.GenericSansSerif, 64, FontStyle.Regular),
                         Font = new Font(SystemFonts.CaptionFont.FontFamily, inputFontSize, FontStyle.Regular),
                         Width = tbWidth, // adjust as needed
-                        Location = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), 128), // adjust as needed
+                        Location = textboxLoc, // adjust as needed
                         MaxLength = 1,
                         BorderStyle = BorderStyle.None,
                         BackColor = Color.White,
@@ -254,7 +240,7 @@ namespace BroDisplaySetup
                         {
                             int typedScreenIndex = int.Parse(e.KeyChar.ToString());
 
-                            if (typedScreenIndex < 0 || typedScreenIndex > maxScreens)
+                            if (typedScreenIndex < 1 || typedScreenIndex > maxScreens)
                             {
                                 e.Handled = true; // Cancel the character
                                 return;
@@ -380,6 +366,8 @@ namespace BroDisplaySetup
                         
                     };
                 }
+
+                screenIdForms.ForEach(f => { f.Show(); });
 
                 primaryForm.BringToFront();
                 primaryForm.Focus();
