@@ -6,7 +6,7 @@ BroDisplaySetup är ett öppen källkodsprogram som underlättar konfigurationen
 
 Syftet med detta program är att försöka minska antalet supportärenden som rör skärminställningar som uppstår av att Windows har ett relativt komplicerat gränssnitt för skärminställningar som kan vara svårt att förstå för användare som inte är vana vid att arbeta med datorer. Detta problem förvärras i aktivitetsbaserade kontorsmiljöer där användare ofta byter arbetsplats. 
 
-## Användning
+## Användning och funktioner
 
 För att använda BroDisplaySetup, följ dessa steg:
 
@@ -14,13 +14,19 @@ För att använda BroDisplaySetup, följ dessa steg:
     - Programmet upptäcker alla anslutna skärmar automatiskt och en optimal upplösning för varje skärm hämtas från Windows.
     - Skrivbordet utökas automatiskt till alla anslutna skärmar
 1. Varje ansluten skärm täcks av en ruta med en stor och tydlig siffra som identifierar skärmen
-1. Användaren presenteras med lika många textfält som skärmar där användaren förväntas skriva in siffrorna hen ser på skärmarna i den ordning man läser dem (från vänster till höger)
+1. Användaren presenteras med lika många textfält som skärmar där användaren uppmanas att skriva in siffrorna hen ser på skärmarna i den ordning man läser dem (från vänster till höger)
     - Exempel: Om det finns tre anslutna skärmar (inkl. den bärbara uppfälld) och det står 2-3-1 på skärmarna (från vänster till höger) förväntas man skriva in 2 3 1.
 
 1. Skärmarna arrangeras från vänster till höger i den ordning som användaren angav för det utökade skrivbordet.
     - Alla skärmar positioneras så att nederkanten av skärmarna är i linje med varandra.
     - Den externa bildskärmen längst till vänster kommer automatiskt att bli den primära bildskärmen (Laptopens interna bildskärm kommer aldrig att bli primär om det finns en eller flera externa bildskärmar). 
 1. Rekommenderad (optimal) upplösning för alla anslutna skärmar tillämpas automatiskt.
+
+## Kända problem
+
+Skärmar som ansluts under tiden programmet körs kommer inte att upptäckas automatiskt. För att upptäcka nya skärmar, starta om programmet.
+
+Programmet har ingen hantering för skärmar som kopplas bort under tiden som det körs. För att upptäcka bortkopplade skärmar, starta om programmet.
 
 ## Bidrag
 
