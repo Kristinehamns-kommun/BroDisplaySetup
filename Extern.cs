@@ -716,9 +716,24 @@ namespace BroDisplaySetup
             //     }
             // }
 
-            public static uint ComputeDisplayModeScore(DEVMODE mode)
+            public static uint ComputeDisplayModeScore(String deviceName, DEVMODE mode)
             {
+                return ComputeDisplayModeScore(deviceName, mode, true);
+            } 
+
+            public static uint ComputeDisplayModeScore(String deviceName, DEVMODE mode, bool checkIfSupportedMode)
+            {
+                if (checkIfSupportedMode && !IsDeviceSupportedDisplayMode(deviceName, mode))
+                {
+                    return 0;
+                }
+
                 return mode.dmPelsWidth * mode.dmPelsHeight * mode.dmBitsPerPel + mode.dmDisplayFrequency;
+            }
+
+            public static bool DisplayModesAreEqual(DEVMODE first, DEVMODE second)
+            {
+                return first.dmPelsWidth == second.dmPelsWidth && first.dmPelsHeight == second.dmPelsHeight && first.dmBitsPerPel == second.dmBitsPerPel && first.dmDisplayFrequency == second.dmDisplayFrequency;
             }
 
             /**
@@ -727,10 +742,10 @@ namespace BroDisplaySetup
              * as the first mode is worse than, equal to, or better than the 
              * second mode based on the "score" of the display mode
              **/
-            public static int CompareDisplayModes(DEVMODE first, DEVMODE second)
+            public static int CompareDisplayModes(String deviceName, DEVMODE first, DEVMODE second)
             {
-                uint firstScore = ComputeDisplayModeScore(first);
-                uint secondScore = ComputeDisplayModeScore(second);
+                uint firstScore = ComputeDisplayModeScore(deviceName, first);
+                uint secondScore = ComputeDisplayModeScore(deviceName, second);
                 if (firstScore < secondScore)
                 {
                     return -1;
@@ -758,7 +773,7 @@ namespace BroDisplaySetup
 
                 while (0 != User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode))
                 {
-                    uint currentModeScore = ComputeDisplayModeScore(mode);
+                    uint currentModeScore = ComputeDisplayModeScore(deviceName, mode, false);
 
                     //Console.WriteLine("Found a mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz");
 
@@ -782,6 +797,26 @@ namespace BroDisplaySetup
                 }
 
                 throw new InvalidOperationException("An error occurred getting optimal display mode for '" + deviceName + "' at index " + bestModeIndex + ".");
+            }
+
+
+            public static bool IsDeviceSupportedDisplayMode(string deviceName, DEVMODE checkedDevMode)
+            {
+                DEVMODE mode = new DEVMODE();
+                mode.dmSize = (ushort)Marshal.SizeOf(mode);
+                int modeIndex = 0;
+
+                while (0 != User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode))
+                {
+                    if (DisplayModesAreEqual(checkedDevMode, mode))
+                    {
+                        return true;
+                    }
+
+                    modeIndex++;
+                }
+
+                return false;
             }
 
             public static IEnumerable<KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_PATH_INFO>> AllActiveDisplayConfigPathsByTargetDeviceName()
@@ -939,7 +974,7 @@ namespace BroDisplaySetup
                 DEVMODE optimalPrimaryDisplayMode = GetOptimalDisplayMode(primaryDisplayName);
                 DEVMODE primaryDevMode = GetCurrentDisplayMode(primaryDisplayName);
                 
-                if (CompareDisplayModes(optimalPrimaryDisplayMode, primaryDevMode) > 0)
+                if (CompareDisplayModes(primaryDisplayName, optimalPrimaryDisplayMode, primaryDevMode) > 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + optimalPrimaryDisplayMode.dmPelsWidth + "x" + optimalPrimaryDisplayMode.dmPelsHeight + " at " + optimalPrimaryDisplayMode.dmDisplayFrequency + "Hz");
                     primaryDevMode = optimalPrimaryDisplayMode;
@@ -963,7 +998,7 @@ namespace BroDisplaySetup
                 {
                     DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
                     DEVMODE devMode = GetCurrentDisplayMode(displayName);
-                    if (CompareDisplayModes(optimalDisplayMode, devMode) > 0)
+                    if (CompareDisplayModes(displayName, optimalDisplayMode, devMode) > 0)
                     {
                         System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
                         devMode = optimalDisplayMode;
@@ -991,7 +1026,7 @@ namespace BroDisplaySetup
                 {
                     DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
                     DEVMODE devMode = GetCurrentDisplayMode(displayName);
-                    if (CompareDisplayModes(optimalDisplayMode, devMode) > 0)
+                    if (CompareDisplayModes(displayName, optimalDisplayMode, devMode) > 0)
                     {
                         System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
                         devMode = optimalDisplayMode;
