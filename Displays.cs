@@ -379,6 +379,13 @@ namespace BroDisplaySetup
 
         public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
+
+            if (displayInfoList.Count == 1 && displayInfoList[0].Internal)
+            {
+                Extern.Displays.Arrange(screenDeviceNamesLTR[0], Array.Empty<String>(), Array.Empty<String>());
+                return;
+            }
+
             int primaryDisplayIndex = 0;
 
             foreach (var deviceName in screenDeviceNamesLTR)
