@@ -31,6 +31,18 @@ The program has been tested with laptops from HP and with screens from Dell and 
 
 More testing with other types of hardware is needed but works well for the devices used at Kristinehamn municipality.
 
+## Building
+
+### Using Docker
+
+Run:
+    
+```bash
+docker/build.sh
+```
+
+Output is in `bin\Release\net7.0-windows\publish\win-x64\BroDisplaySetup.exe`.
+
 ## Known issues
 
 Screens that are connected while the program is running will not be detected automatically. To detect new screens, restart the program.

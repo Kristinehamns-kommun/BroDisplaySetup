@@ -30,6 +30,18 @@ Programmet har testats med laptops från HP samt med skärmar från Dell och HP.
 
 Mer testning med andra typer av hårdvara behövs men fungerar bra för de enheter som används på Kristinehamns kommun.
 
+## Bygga
+
+### Bygg med Docker
+
+Kör:
+    
+```bash
+docker/build.sh
+```
+
+Exekverbar fil skapas i `bin\Release\net7.0-windows\publish\win-x64\BroDisplaySetup.exe`.
+
 ## Kända problem
 
 Skärmar som ansluts under tiden programmet körs kommer inte att upptäckas automatiskt. För att upptäcka nya skärmar, starta om programmet.
@@ -55,4 +67,9 @@ Bidrag är välkomna! Om du vill bidra till BroDisplaySetup, följ dessa riktlin
 ## Licens
 
 BroDisplaySetup släpps under [GNU General Public License](LICENSE.md).
+
+
+
+
+
 
