@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.ComponentModel;
 using System.IO;
+using System.ComponentModel.Design;
 
 namespace BroDisplaySetup 
 { 
@@ -927,6 +928,41 @@ namespace BroDisplaySetup
                 }
             }
 
+            public static void SetDisplayMode(String displayName, ref DEVMODE devMode, bool asPrimary)
+            {
+                ChangeDisplaySettingsFlags asPrimaryFlag = new ChangeDisplaySettingsFlags();
+
+                if (asPrimary) { 
+                    asPrimaryFlag = ChangeDisplaySettingsFlags.CDS_SET_PRIMARY;
+                }
+
+                var testResult = User_32.ChangeDisplaySettingsEx(
+                                displayName,
+                                ref devMode,
+                                (IntPtr)null,
+                                ChangeDisplaySettingsFlags.CDS_TEST | asPrimaryFlag,
+                                IntPtr.Zero
+                             );
+
+                if (testResult != DISP_CHANGE.Successful) //Unsuccessful
+                {
+                    throw new InvalidOperationException("An error occurred testing display mode for '" + displayName + "'. DISP_CHANGE: '" + testResult.ToString() + "'");
+                }
+
+                var result = User_32.ChangeDisplaySettingsEx(
+                                displayName,
+                                ref devMode,
+                                (IntPtr)null,
+                                ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET | asPrimaryFlag,
+                                IntPtr.Zero
+                            );
+
+                if (result != DISP_CHANGE.Successful) //Unsuccessful
+                {
+                    throw new InvalidOperationException("An error occurred setting display mode for '" + displayName + "'. DISP_CHANGE: '" + result.ToString() + "'");
+                }
+            }
+
             public static void Arrange(string primaryDisplayName, string[] leftDisplayNames, string[] rightDisplayNames)
             {
                 const uint DM_PELSWIDTH = 0x00080000;
@@ -951,7 +987,7 @@ namespace BroDisplaySetup
                 primaryDevMode.dmPosition.y = 0;
 
                 System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + primaryDevMode.dmPosition.x + "," + primaryDevMode.dmPosition.y);
-                User_32.ChangeDisplaySettingsEx(primaryDisplayName, ref primaryDevMode, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_SET_PRIMARY | ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET, IntPtr.Zero);
+                SetDisplayMode(primaryDisplayName, ref primaryDevMode, true);
 
                 IntPtr nullPtr = IntPtr.Zero;
                 int positionX = 0;
@@ -976,13 +1012,7 @@ namespace BroDisplaySetup
                     devMode.dmPosition.y = (int)Math.Max(0, primaryDevHeight - devMode.dmPelsHeight);
 
                     System.Diagnostics.Debug.WriteLine("Set left " + displayName + " to " + devMode.dmPosition.x + "," + devMode.dmPosition.y);
-
-                    User_32.ChangeDisplaySettingsEx(
-                        displayName,
-                        ref devMode,
-                        (IntPtr)null,
-                        ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET,
-                        IntPtr.Zero);
+                    SetDisplayMode(displayName, ref devMode, true);
                 }
 
                 positionX = (int)GetCurrentResolutionWidth(primaryDisplayName);
@@ -1002,13 +1032,7 @@ namespace BroDisplaySetup
                     devMode.dmPosition.x = positionX;
                     devMode.dmPosition.y = (int)Math.Max(0, primaryDevHeight - devMode.dmPelsHeight);
                     System.Diagnostics.Debug.WriteLine("Set right " + displayName + " to " + positionX + "," + positionY);
-
-                    User_32.ChangeDisplaySettingsEx(
-                        displayName,
-                        ref devMode,
-                        (IntPtr)null,
-                        ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET,
-                        IntPtr.Zero);
+                    SetDisplayMode(displayName, ref devMode, true);
 
                     positionX += (int)GetCurrentResolutionWidth(displayName);
                 }
