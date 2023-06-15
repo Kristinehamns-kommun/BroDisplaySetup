@@ -43,7 +43,7 @@ jobs:
           LICENSE.md
         tag_name: ${{ github.ref }}
         body: |
-          ${{steps.build_changelog.outputs.repo}} ${{ github.ref }}
+          ${{steps.build_changelog.outputs.repo}} ${{ github.ref_name }}
           
           ${{steps.build_changelog.outputs.changelog}}
         draft: false
