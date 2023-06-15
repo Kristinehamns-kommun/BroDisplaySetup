@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 jobs:
-  build:
+  publish-action:
 
     runs-on: ubuntu-latest
 
@@ -14,8 +14,8 @@ jobs:
     - run: echo "Release tag: ${{ github.ref }}"
     - run: echo "Release triggered by event: ${{ github.event_name }}"
     - run: echo "Running on: '${{ runner.os }}'"
-    
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
