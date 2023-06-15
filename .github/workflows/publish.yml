@@ -11,7 +11,7 @@ permissions:
 jobs:
   publish-action:
   
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
   
     steps:
     - run: |
@@ -27,9 +27,9 @@ jobs:
       with:
         dotnet-version: 7.0
     - name: Restore dependencies
-      run: dotnet restore /p:EnableWindowsTargeting=true
+      run: dotnet restore
     - name: Build
-      run: dotnet publish -p:PublishProfile=FolderProfile -p:EnableWindowsTargeting=true
+      run: dotnet publish -p:PublishProfile=FolderProfile
     - name: "Build Changelog for Release"
       id: github_release
       uses: mikepenz/release-changelog-builder-action@v4
@@ -46,9 +46,9 @@ jobs:
           CHANGELOG.md
         tag_name: ${{ github.ref_name }}
         body: |
-          ${{steps.github_release.outputs.repo}} ${{ github.ref_name }}
+          # ${{steps.github_release.outputs.repo}} ${{ github.ref_name }}
           
-          Changelog:
+          ## Changelog
           ${{steps.github_release.outputs.changelog}}
         draft: false
         prerelease: true
