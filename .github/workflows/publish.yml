@@ -1,0 +1,45 @@
+name: .NET publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - run: echo "Release tag: ${{ github.ref }}"
+    - run: echo "Release triggered by event: ${{ github.event_name }}"
+    - run: echo "Running on: '${{ runner.os }}'"
+    
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0
+    - name: Restore dependencies
+      run: dotnet restore /p:EnableWindowsTargeting=true
+    - name: Build
+      run: dotnet publish -p:PublishProfile=FolderProfile -p:EnableWindowsTargeting=true
+    - name: "Build Changelog"
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create release on github
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./bin/Release/net7.0-windows/publish/win-x64/BroDisplaySetup.exe
+          LICENSE.md
+        tag_name: ${{ github.ref }}
+        body: |
+          ${{steps.build_changelog.outputs.repo}} ${{ github.ref }}
+          
+          ${{steps.build_changelog.outputs.changelog}}
+        draft: false
+        prerelease: true
+        token: ${{ secrets.GITHUB_TOKEN }}
