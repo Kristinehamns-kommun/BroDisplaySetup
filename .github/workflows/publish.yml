@@ -7,13 +7,16 @@ on:
 
 jobs:
   publish-action:
-
+  
     runs-on: ubuntu-latest
-
+  
     steps:
-    - run: echo "Release tag: ${{ github.ref }}"
-    - run: echo "Release triggered by event: ${{ github.event_name }}"
-    - run: echo "Running on: '${{ runner.os }}'"
+    - run: |
+        echo "Release tag: ${{ github.ref }}"
+    - run: |
+        echo "Release triggered by event: ${{ github.event_name }}"
+    - run: |
+        echo "Running on: ${{ runner.os }}"
     - name: Checkout
       uses: actions/checkout@v3
     - name: Setup .NET
