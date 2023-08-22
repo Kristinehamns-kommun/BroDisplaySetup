@@ -1,6 +1,15 @@
+ <p align="center">
+  <a href="README.md">English</a> |
+  <span>Svenska</span>
+</p>
+
 # BroDisplaySetup
 
 BroDisplaySetup är ett öppen källkodsprogram som underlättar konfigurationen av skärminställningarna på användarens arbetsplats. Ambitionen är att skapa en förenklad form av skärminställningsgränssnittet i Windows som är lätt att använda för alla användare.
+
+## Demo
+
+https://github.com/Kristinehamns-kommun/BroDisplaySetup/assets/32820/32f6ab9f-a1ee-4f4b-afee-49f43677373c
 
 ## Syfte
 

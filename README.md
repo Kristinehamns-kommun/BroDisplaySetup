@@ -1,6 +1,15 @@
-# BroDisplaySetup
+ <p align="center">
+  <span>English</span> |
+  <a href="README.sv-se.md">Svenska</a>
+</p>
+
+# BroDisplaySetup 
 
 BroDisplaySetup is an open source program that facilitates the configuration of the screen settings on the user's workstation. The ambition is to create a simplified form of the screen settings interface in Windows that is easy to use for all users.
+
+## Demo
+
+https://github.com/Kristinehamns-kommun/BroDisplaySetup/assets/32820/3a6cd9ac-8fa4-4e79-86c2-6925cbc1340f
 
 ## Purpose
 
