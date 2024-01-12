@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Management;
+using BroDisplaySetup.DPI;
 using BroDisplaySetup.Extern;
 using Microsoft.Win32;
 
@@ -22,6 +23,7 @@ namespace BroDisplaySetup
         public string DeviceName { get; set; }
         public Rectangle Bounds { get; set; }
         public Size OptimalResolution { get; set; }
+        public DPIScalingInfo DpiScalingInfo { get; set; }
 
         public override string ToString()
         {
@@ -37,7 +39,8 @@ namespace BroDisplaySetup
                    $"VideoOutputTechnology: {VideoOutputTechnology}{Environment.NewLine}" +
                    $"Internal: {internalStringValue}{Environment.NewLine}" +
                    $"Bounds: {Bounds}{Environment.NewLine}" +
-                   $"OptimalResolution: {OptimalResolution.Width} x {OptimalResolution.Height}";
+                   $"OptimalResolution: {OptimalResolution.Width} x {OptimalResolution.Height}{Environment.NewLine}" +
+                   $"DpiScalingInfo: {DpiScalingInfo.Current}% (min: {DpiScalingInfo.Minimum}%, max: {DpiScalingInfo.Maximum}%, recommended: {DpiScalingInfo.Recommended}%)";
         }
 
         public static List<DisplayInfo> GetDisplayInfoForAllConnectedDisplayDevices()
@@ -57,9 +60,16 @@ namespace BroDisplaySetup
 
             Dictionary<string, Extern.DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> displayOutputTechnologies = Extern.Displays.GetVideoOutputTechnologyByDevicePathMap();
 
-            foreach(var tech in displayOutputTechnologies)
+            foreach (var tech in displayOutputTechnologies)
             {
                 System.Diagnostics.Debug.WriteLine("{0}={1}", tech.Key, tech.Value);
+            }
+
+            IEnumerable<KeyValuePair<string, DPIScalingInfo>> dpiScales = DPI.DPIHelper.GetDpiScalingInfoByDevicePathMap();
+
+            foreach (var dpi in dpiScales)
+            {
+                System.Diagnostics.Debug.WriteLine("{0}={1} DPI (min:{2}, max:{3})", dpi.Key, dpi.Value.Current, dpi.Value.Minimum, dpi.Value.Maximum);
             }
 
             foreach (ManagementObject monitor in wmiMonitorCollection)
@@ -70,6 +80,7 @@ namespace BroDisplaySetup
                 string manufacturerName = DecodeName(monitor["ManufacturerName"] as ushort[]);
                 string instanceName = (string)monitor["InstanceName"];
                 string monitorPnpDeviceId = ((string)monitor["InstanceName"]).Split('_')[0].ToUpper();
+                DPIScalingInfo deviceDPIScalingInfo = new DPIScalingInfo();
 
                 string displayProduct = monitorPnpDeviceId.Split('\\')[1];
 
@@ -94,6 +105,18 @@ namespace BroDisplaySetup
                     }
                 }
 
+                foreach(var dpi in dpiScales)
+                {
+                    System.Diagnostics.Debug.WriteLine("{0} contains {1}", dpi.Key.ToUpper(), monitorPnpDeviceId.Replace("\\", "#"));
+                    if (dpi.Key.ToUpper().Contains(monitorPnpDeviceId.Replace("\\", "#")))
+                    {
+                        System.Diagnostics.Debug.WriteLine("Found DPI scaling for {0}", monitorPnpDeviceId);
+                        System.Diagnostics.Debug.WriteLine("DPI scaling is {0}", dpi.Value.Current);
+                        deviceDPIScalingInfo = dpi.Value;
+                        break;
+                    }
+                }   
+
                 var displayInfo = new DisplayInfo
                 {
                     UserFriendlyName = userFriendlyName,
@@ -103,7 +126,8 @@ namespace BroDisplaySetup
                     PnpDeviceId = monitorPnpDeviceId,
                     InstanceName = instanceName,
                     VideoOutputTechnology = outputTechnology,
-                    Internal = internalMonitor
+                    Internal = internalMonitor,
+                    DpiScalingInfo = deviceDPIScalingInfo
                 };
 
 

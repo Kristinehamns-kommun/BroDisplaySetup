@@ -330,6 +330,16 @@ namespace BroDisplaySetup
             DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32 = 0xFFFFFFFF
         }
 
+        /**
+         * out own enum, similar to DISPLAYCONFIG_DEVICE_INFO_TYPE enum (in wingdi.h)
+         * Undocumented but used by the API
+         */
+        public enum DISPLAYCONFIG_DEVICE_INFO_TYPE_CUSTOM : int
+        {             
+            DISPLAYCONFIG_DEVICE_INFO_GET_DPI_SCALE = -3, //returns min, max, suggested, and currently applied DPI scaling values.
+            DISPLAYCONFIG_DEVICE_INFO_SET_DPI_SCALE = -4 //set current dpi scaling value for a display
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         public struct LUID
         {
@@ -451,6 +461,15 @@ namespace BroDisplaySetup
             public uint id;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_DEVICE_INFO_CUSTOM_HEADER
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_TYPE_CUSTOM type;
+            public uint size;
+            public LUID adapterId;
+            public uint id;
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct DISPLAYCONFIG_TARGET_DEVICE_NAME
         {
@@ -467,7 +486,26 @@ namespace BroDisplaySetup
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
             public string monitorDevicePath;
         }
+        public struct DISPLAYCONFIG_SOURCE_DPI_SCALE_GET
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_CUSTOM_HEADER header;
+            /*
+            * @brief min value of DPI scaling is always 100, minScaleRel gives no. of steps down from recommended scaling
+            * eg. if minScaleRel is -3 => 100 is 3 steps down from recommended scaling => recommended scaling is 175%
+            */
+            public int minScaleRel;
 
+            /*
+            * @brief currently applied DPI scaling value wrt the recommended value. eg. if recommended value is 175%,
+            * => if curScaleRel == 0 the current scaling is 175%, if curScaleRel == -1, then current scale is 150%
+            */
+            public int curScaleRel;
+
+            /*
+            * @brief maximum supported DPI scaling wrt recommended value
+            */
+            public int maxScaleRel;
+        };
 
         class User_32
         {
@@ -505,6 +543,9 @@ namespace BroDisplaySetup
 
             [DllImport("user32.dll")]
             public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName);
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DPI_SCALE_GET dpiScaleGet);
 
 
             [DllImport("user32.dll")]
@@ -819,6 +860,76 @@ namespace BroDisplaySetup
                 return false;
             }
 
+            public static IEnumerable<KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>> AllActiveDisplayDpiScaleByTargetDeviceName()
+            {
+                uint pathArraySize = 0;
+                uint modeArraySize = 0;
+
+                int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, out pathArraySize, out modeArraySize);
+
+                if (bufferSizeResult == 0)
+                {
+                    DISPLAYCONFIG_PATH_INFO[] pathArray = new DISPLAYCONFIG_PATH_INFO[pathArraySize];
+                    DISPLAYCONFIG_MODE_INFO[] modeArray = new DISPLAYCONFIG_MODE_INFO[modeArraySize];
+
+                    int queryResult = User_32.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, ref pathArraySize, pathArray, ref modeArraySize, modeArray, IntPtr.Zero);
+
+                    if (queryResult == 0)
+                    {
+                        foreach (DISPLAYCONFIG_PATH_INFO path in pathArray)
+                        {
+                            var targetName = new DISPLAYCONFIG_TARGET_DEVICE_NAME
+                            {
+                                header =
+                                    {
+                                        type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+                                        size = (uint)Marshal.SizeOf(typeof (DISPLAYCONFIG_TARGET_DEVICE_NAME)),
+                                        adapterId = path.targetInfo.adapterId,
+                                        id = path.targetInfo.id,
+                                    }
+                            };
+                            var result = User_32.DisplayConfigGetDeviceInfo(ref targetName);
+
+                            if (result != User_32.ERROR_SUCCESS) // ERROR_SUCCESS
+                            {
+                                throw new Win32Exception(result);
+                                //continue;
+                            }
+
+                            var dpiRequestPacket = new DISPLAYCONFIG_SOURCE_DPI_SCALE_GET
+                            {
+                                header =
+                                    {
+                                        type = DISPLAYCONFIG_DEVICE_INFO_TYPE_CUSTOM.DISPLAYCONFIG_DEVICE_INFO_GET_DPI_SCALE,
+                                        size = (uint)Marshal.SizeOf(typeof (DISPLAYCONFIG_SOURCE_DPI_SCALE_GET)),
+                                        adapterId = path.targetInfo.adapterId,
+                                        id = path.sourceInfo.id
+                                    }
+                            };
+                            
+                            result = User_32.DisplayConfigGetDeviceInfo(ref dpiRequestPacket);
+
+                            if (result != User_32.ERROR_SUCCESS) // ERROR_SUCCESS
+                            {
+                                throw new Win32Exception(result);
+                                //continue;
+                            }
+
+                            yield return new KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>(targetName, dpiRequestPacket);
+                        }
+                    }
+                    else
+                    {
+                        throw new Win32Exception(queryResult);
+                    }
+                }
+                else
+                {
+                    throw new Win32Exception(bufferSizeResult);
+                }
+
+            }
+
             public static IEnumerable<KeyValuePair<DISPLAYCONFIG_TARGET_DEVICE_NAME, DISPLAYCONFIG_PATH_INFO>> AllActiveDisplayConfigPathsByTargetDeviceName()
             {
                 uint pathArraySize = 0;
@@ -905,7 +1016,17 @@ namespace BroDisplaySetup
                 {
                     throw new Win32Exception(bufferSizeResult);
                 }
+            }
 
+            public static Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET> GetDpiSettingByDevicePathMap()
+            {
+                var result = new Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>();
+                foreach (var keyVal in AllActiveDisplayDpiScaleByTargetDeviceName())
+                {
+                    result.Add(keyVal.Key.monitorDevicePath, keyVal.Value);
+                }
+
+                return result;
             }
 
             public static Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> GetVideoOutputTechnologyByDevicePathMap()
