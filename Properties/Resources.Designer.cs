@@ -84,7 +84,19 @@ namespace BroDisplaySetup.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Skriv in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger). 
+        ///   Looks up a localized string similar to Förstora text, appar och andra objekt på anslutna skärmar.
+        /// </summary>
+        internal static string ScaleDisplays {
+            get {
+                return ResourceManager.GetString("ScaleDisplays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Välj om du vill förstora (skala) text, appar och andra objekt på anslutna 
+        ///bildskärmar med 25%. Om inget väljs återgår skärmarna till sitt standardvärde.
+        ///
+        ///Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger). 
         ///
         ///Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
         ///

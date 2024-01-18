@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,24 +37,37 @@ namespace BroDisplaySetup
                 Recommended = 100;
                 InitDone = false;
             }
+
+            public DPIScalingInfo(Extern.DISPLAYCONFIG_SOURCE_DPI_SCALE_GET fromDpiScaleGetResult)
+            {
+                Minimum = 100;
+
+                int minAbs = Math.Abs((int)fromDpiScaleGetResult.minScaleRel);
+                int getVal = minAbs + fromDpiScaleGetResult.curScaleRel;
+                if (getVal < 0 || getVal >= DPIConstants.DpiVals.Length)
+                {
+                    //throw new ArgumentOutOfRangeException("fromDpiScaleGetResult", "Invalid DPI scaling value");
+                    Current = DPIConstants.DpiVals[0];
+                } else
+                {
+                    Current = DPIConstants.DpiVals[minAbs + fromDpiScaleGetResult.curScaleRel];
+                }
+                
+                Recommended = DPIConstants.DpiVals[minAbs];
+                Maximum = DPIConstants.DpiVals[minAbs + fromDpiScaleGetResult.maxScaleRel];
+                InitDone = true;
+            }
         }
 
         public class DPIHelper
         {
             public static IEnumerable<KeyValuePair<string, DPIScalingInfo>> GetDpiScalingInfoByDevicePathMap()
             {
-                Dictionary<string, Extern.DISPLAYCONFIG_SOURCE_DPI_SCALE_GET> dpiScales = Extern.Displays.GetDpiSettingByDevicePathMap();
+                Dictionary<string, Extern.DISPLAYCONFIG_SOURCE_DPI_SCALE_GET> dpiScales = Extern.Displays.GetDPISettingByDevicePathMap();
 
                 foreach (var dpi in dpiScales)
                 {
-                    int minAbs = Math.Abs((int)dpi.Value.minScaleRel);
-                    yield return new KeyValuePair<string, DPIScalingInfo>(dpi.Key, new DPIScalingInfo()
-                    {
-                        Current = DPIConstants.DpiVals[minAbs + dpi.Value.curScaleRel],
-                        Recommended = DPIConstants.DpiVals[minAbs],
-                        Maximum = DPIConstants.DpiVals[minAbs + dpi.Value.maxScaleRel],
-                        InitDone = true
-                    });
+                    yield return new KeyValuePair<string, DPIScalingInfo>(dpi.Key, new DPIScalingInfo(dpi.Value));
                 }
             }
         }

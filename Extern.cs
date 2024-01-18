@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.ComponentModel;
 using System.IO;
+using BroDisplaySetup.DPI;
 
 namespace BroDisplaySetup 
 { 
@@ -507,6 +508,21 @@ namespace BroDisplaySetup
             public int maxScaleRel;
         };
 
+        /*
+        * struct DISPLAYCONFIG_SOURCE_DPI_SCALE_SET
+        * @brief set DPI scaling value of a source
+        * Note that DPI scaling is a property of the source, and not of target.
+        */
+        struct DISPLAYCONFIG_SOURCE_DPI_SCALE_SET
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_CUSTOM_HEADER header;
+            /*
+            * @brief The value we want to set. The value should be relative to the recommended DPI scaling value of source.
+            * eg. if scaleRel == 1, and recommended value is 175% => we are trying to set 200% scaling for the source
+            */
+            public int scaleRel;
+        };
+
         class User_32
         {
             public const int ERROR_SUCCESS = 0;
@@ -546,6 +562,9 @@ namespace BroDisplaySetup
 
             [DllImport("user32.dll")]
             public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DPI_SCALE_GET dpiScaleGet);
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigSetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DPI_SCALE_SET dpiScaleSet);
 
 
             [DllImport("user32.dll")]
@@ -1018,7 +1037,7 @@ namespace BroDisplaySetup
                 }
             }
 
-            public static Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET> GetDpiSettingByDevicePathMap()
+            public static Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET> GetDPISettingByDevicePathMap()
             {
                 var result = new Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>();
                 foreach (var keyVal in AllActiveDisplayDpiScaleByTargetDeviceName())
@@ -1027,6 +1046,86 @@ namespace BroDisplaySetup
                 }
 
                 return result;
+            }
+
+            public static bool SetDpiScaling(String monitorPnpDeviceId, uint dpiPercent)
+            {
+                String devicePath = monitorPnpDeviceId.Replace("\\", "#");
+                uint dpiPercentToSet = dpiPercent;
+
+                //var result = new Dictionary<String, DISPLAYCONFIG_SOURCE_DPI_SCALE_GET>();
+                foreach (var dpiByDevicePathKeyVal in AllActiveDisplayDpiScaleByTargetDeviceName())
+                {
+                    if (dpiByDevicePathKeyVal.Key.monitorDevicePath.ToUpper().Contains(devicePath)) {
+                        DPIScalingInfo dPIScalingInfo = new DPIScalingInfo(dpiByDevicePathKeyVal.Value);
+
+                        if (dpiPercentToSet == dPIScalingInfo.Current)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Set monitor {0} dpi to {1} - no change", monitorPnpDeviceId, dpiPercentToSet);
+                            return true;
+                        }
+
+                        if (dpiPercentToSet < dPIScalingInfo.Minimum)
+                        {
+                            dpiPercentToSet = dPIScalingInfo.Minimum;
+                        }
+                        else if (dpiPercentToSet > dPIScalingInfo.Maximum)
+                        {
+                            dpiPercentToSet = dPIScalingInfo.Maximum;
+                        }
+
+                        int idx1 = -1, idx2 = -1;
+                        int i = 0;
+
+                        foreach(uint val in DPIConstants.DpiVals)
+                        {
+                            if (val == dpiPercentToSet)
+                            {
+                                idx1 = i;
+                            }
+
+                            if (val == dPIScalingInfo.Recommended)
+                            {
+                                idx2 = i;
+                            }
+                            i++;
+                        }
+
+                        if ((idx1 == -1) || (idx2 == -1))
+                        {
+                            //Error cannot find dpi value
+                            return false;
+                        }
+
+                        int dpiRelativeVal = idx1 - idx2;
+
+                        System.Diagnostics.Debug.WriteLine("Set monitor {0} dpi to {1} using relative val {2}", dpiByDevicePathKeyVal.Key.monitorDevicePath, dpiPercentToSet, dpiRelativeVal);
+
+                        var setDpiRequestPacket = new DISPLAYCONFIG_SOURCE_DPI_SCALE_SET
+                        {
+                            header =
+                                    {
+                                        type = DISPLAYCONFIG_DEVICE_INFO_TYPE_CUSTOM.DISPLAYCONFIG_DEVICE_INFO_SET_DPI_SCALE,
+                                        size = (uint)Marshal.SizeOf(typeof (DISPLAYCONFIG_SOURCE_DPI_SCALE_SET)),
+                                        adapterId = dpiByDevicePathKeyVal.Value.header.adapterId, //path.targetInfo.adapterId,
+                                        id = dpiByDevicePathKeyVal.Value.header.id //path.sourceInfo.id
+                                    }
+                        };
+
+                        setDpiRequestPacket.scaleRel = dpiRelativeVal;
+
+                        int result = User_32.DisplayConfigSetDeviceInfo(ref setDpiRequestPacket);
+
+                        if (result != User_32.ERROR_SUCCESS) // ERROR_SUCCESS
+                        {
+                            throw new Win32Exception(result);
+                            //continue;
+                        }
+
+                    }
+                }
+
+                return true;
             }
 
             public static Dictionary<String, DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY> GetVideoOutputTechnologyByDevicePathMap()

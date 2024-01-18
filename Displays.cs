@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
 
 namespace BroDisplaySetup
 {
@@ -111,7 +112,7 @@ namespace BroDisplaySetup
 
                         // Calculate the top-left point of the string to draw it centered in the form
                         float x = (form.Width - stringSize.Width) / 2;
-                        float y = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 8);
+                        float y = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 10);
 
                         if (screen.Primary)
                         {
@@ -207,8 +208,10 @@ namespace BroDisplaySetup
 
                 foreach (Screen screen in allScreens)
                 {
+
                     Point textboxLoc = new Point(startLeft + (textboxIndex * (tbWidth + tbMargin)), primarySceenIdTextY - inputFontSize);
-                    textboxLoc.Offset(0, -((textboxLoc.Y)/2));
+
+                    textboxLoc.Offset(0, -((textboxLoc.Y) / 2));
 
                     RoundedTextBox textBox = new()
                     {
@@ -247,7 +250,7 @@ namespace BroDisplaySetup
                             }
 
 
-                            for(int i = 0; i < screenIdTextBoxList.Count; i++)
+                            for (int i = 0; i < screenIdTextBoxList.Count; i++)
                             {
                                 if (i != (int)((RoundedTextBox)s).Tag)
                                 {
@@ -310,7 +313,7 @@ namespace BroDisplaySetup
                                 if (((RoundedTextBox)s).Text.Trim().Length > 0) {
                                     textBox.Focus();
                                 }
-                                
+
                                 System.Diagnostics.Debug.WriteLine("Next on keyup");
                             }
                         };
@@ -329,6 +332,31 @@ namespace BroDisplaySetup
                     textboxIndex++;
                 }
 
+
+                int scaleFontSize = primaryForm.Height / 64;
+                string scaleText = Properties.Resources.ScaleDisplays;
+
+                ScalableCheckBox autoScaleDisplaysCheckBox = new()
+                {
+                    Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
+                    Tag = textboxIndex,
+                    Text = scaleText,
+                    Margin = new Padding(0, 0, 0, 0),
+                };
+
+                autoScaleDisplaysCheckBox.SetSizeToRequired();
+
+                Point scaleDisplaysCheckBoxLoc = new Point((primaryForm.Width - autoScaleDisplaysCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
+                //scaleDisplaysCheckBoxLoc.Offset(0, firstTextBox.Height+10);
+                scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + 20));
+
+                autoScaleDisplaysCheckBox.Location = scaleDisplaysCheckBoxLoc;
+                primaryForm.Controls.Add(autoScaleDisplaysCheckBox);
+
+                // Calculate the top-left point of the string to draw it centered in the form
+                //float formCenterX = (form.Width - stringSize.Width) / 2;
+                //float formCenterY = ((form.Height - stringSize.Height) / 2) - (stringSize.Height / 8);
+ 
                 RoundedTextBox lastTextBox = previouslyAddedTextBox;
 
                 if (firstTextBox != null)
@@ -359,6 +387,13 @@ namespace BroDisplaySetup
 
                         ArrangeLTRWithAutoPrimary(userOrderedDeviceNames);
 
+                        if (autoScaleDisplaysCheckBox.IsChecked == true) {
+                            autoscaleExternalDisplays();
+                        } else
+                        {
+                            resetScalingForExternalDisplays();
+                        }
+
                         // Sleep 100ms
                         System.Threading.Thread.Sleep(100);
 
@@ -375,6 +410,34 @@ namespace BroDisplaySetup
             }
 
             return null;
+        }
+
+        public static void autoscaleExternalDisplays()
+        {
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
+
+            foreach (var displayInfo in displayInfoList)
+            {
+                if (displayInfo.Internal)
+                {
+                    continue;
+                }
+
+                Extern.Displays.SetDpiScaling(displayInfo.PnpDeviceId, 125);
+            }
+        }
+
+        public static void resetScalingForExternalDisplays()
+        {
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
+            foreach (var displayInfo in displayInfoList)
+            {
+                if (displayInfo.Internal)
+                {
+                    continue;
+                }
+                Extern.Displays.SetDpiScaling(displayInfo.PnpDeviceId, 100);
+            }
         }
 
         public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
