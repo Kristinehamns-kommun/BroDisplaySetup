@@ -5,21 +5,39 @@ VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BroDisplaySetup", "BroDisplaySetup.csproj", "{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "BroDisplaySetupInstaller", "installer\BroDisplaySetupInstaller.vdproj", "{557ED928-5E48-4C25-9322-FD3E74B3424D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Debug|x64.ActiveCfg = Debug|x64
+		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Debug|x64.Build.0 = Debug|x64
 		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Release|x64.ActiveCfg = Release|x64
+		{4CB53FB6-A6EB-4201-A288-D852F96FDE6D}.Release|x64.Build.0 = Release|x64
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Debug|Any CPU.ActiveCfg = Debug
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Debug|x64.ActiveCfg = Debug
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Debug|x64.Build.0 = Debug
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Release|Any CPU.ActiveCfg = Release
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Release|x64.ActiveCfg = Release
+		{557ED928-5E48-4C25-9322-FD3E74B3424D}.Release|x64.Build.0 = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {817FBEA3-8894-45CE-A424-5B30B5787F1F}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 EndGlobal

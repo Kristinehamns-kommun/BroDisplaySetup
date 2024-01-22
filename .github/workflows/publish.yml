@@ -30,6 +30,9 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet publish -p:PublishProfile=FolderProfile
+    - uses: seanmiddleditch/gha-setup-vsdevenv@v4
+    - name: Build the Installer
+      run: devenv ".\BroDisplaySetup.sln"  /Project ".\installer\BroDisplaySetupInstaller.vdproj" /Build "Release"
     - name: "Build Changelog for Release"
       id: github_release
       uses: mikepenz/release-changelog-builder-action@v4
@@ -42,6 +45,8 @@ jobs:
       with:
         files: |
           ./bin/Release/net7.0-windows/publish/win-x64/BroDisplaySetup.exe
+          ./installer/Release/BroDisplaySetupInstaller.msi
+          ./installer/Release/setup.exe
           LICENSE.md
           CHANGELOG.md
         tag_name: ${{ github.ref_name }}
