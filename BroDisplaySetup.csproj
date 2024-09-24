@@ -5,9 +5,9 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-	<Version>0.9.2-beta</Version>
-	<AssemblyVersion>0.9.2</AssemblyVersion>
-	<FileVersion>0.9.2</FileVersion>
+	<Version>0.9.4</Version>
+	<AssemblyVersion>0.9.4</AssemblyVersion>
+	<FileVersion>0.9.4</FileVersion>
 	<Authors>Joe Siponen</Authors>
 	<Copyright>© 2023 Joe Siponen</Copyright>
 	<Company>Kristinehamns kommun</Company>

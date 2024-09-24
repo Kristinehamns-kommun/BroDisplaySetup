@@ -218,15 +218,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:BroDisplaySetup"
-        "ProductCode" = "8:{1AC2E4D4-9A1E-40F2-9E5E-B183937D15A1}"
-        "PackageCode" = "8:{67C6F376-368C-4927-9117-5A0B9925F9F2}"
+        "ProductCode" = "8:{605DF0B4-133B-4E95-96AA-BD3A66E4CB62}"
+        "PackageCode" = "8:{E93E1902-6684-45A2-9997-2ED46BD33812}"
         "UpgradeCode" = "8:{A7265706-3F33-4A5F-83F6-CADD64FB7B95}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.9.2"
+        "ProductVersion" = "8:0.9.4"
         "Manufacturer" = "8:Kristinehamns kommun"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -348,7 +348,7 @@
                                         {
                                             "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_1C30D9AB76954A3C9A79EA6DBCC96536"
                                             {
-                                            "Name" = "8:Arrangera bildskärmar v2"
+                                            "Name" = "8:Arrangera bildskärmar"
                                             "Condition" = "8:"
                                             "AlwaysCreate" = "11:FALSE"
                                             "DeleteAtUninstall" = "11:TRUE"
