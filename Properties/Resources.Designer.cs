@@ -82,7 +82,16 @@ namespace BroDisplaySetup.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Konferensrum: gör den bärbara skärmen till huvudskärm.
+        /// </summary>
+        internal static string ConferenceRoomCheckboxText {
+            get {
+                return ResourceManager.GetString("ConferenceRoomCheckboxText", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Förstora text, appar och andra objekt på anslutna skärmar.
         /// </summary>
@@ -106,6 +115,57 @@ namespace BroDisplaySetup.Properties {
         internal static string ShortHelp {
             get {
                 return ResourceManager.GetString("ShortHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to En av de anslutna skärmarna är stor och skalas därför automatiskt för bättre läsbarhet.
+        ///
+        ///Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+        ///
+        ///Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+        ///
+        ///Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+        ///det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1..
+        /// </summary>
+        internal static string ShortHelpForcedScaling {
+            get {
+                return ResourceManager.GetString("ShortHelpForcedScaling", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Konferensrumsläge har identifierats. Den interna (bärbara) skärmen sätts som huvudskärm och den anslutna skärmen skalas automatiskt för bättre läsbarhet.
+        ///
+        ///Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+        ///
+        ///Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+        ///
+        ///Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+        ///det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1..
+        /// </summary>
+        internal static string ShortHelpConferenceRoom {
+            get {
+                return ResourceManager.GetString("ShortHelpConferenceRoom", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Konferensrumsläge är aktiverat. Den interna (bärbara) skärmen sätts som huvudskärm.
+        ///
+        ///Välj om du vill förstora (skala) text, appar och andra objekt på anslutna
+        ///bildskärmar med 25%. Om inget väljs återgår skärmarna till sitt standardvärde.
+        ///
+        ///Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+        ///
+        ///Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+        ///
+        ///Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+        ///det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1..
+        /// </summary>
+        internal static string ShortHelpConferenceRoomOptionalScaling {
+            get {
+                return ResourceManager.GetString("ShortHelpConferenceRoomOptionalScaling", resourceCulture);
             }
         }
     }

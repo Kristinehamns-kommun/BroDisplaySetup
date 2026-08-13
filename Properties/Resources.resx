@@ -131,11 +131,47 @@ You should have received a copy of the GNU General Public License along with thi
   <data name="ScaleDisplays" xml:space="preserve">
     <value>Förstora text, appar och andra objekt på anslutna skärmar</value>
   </data>
+  <data name="ConferenceRoomCheckboxText" xml:space="preserve">
+    <value>Konferensrum: gör den bärbara skärmen till huvudskärm</value>
+  </data>
   <data name="ShortHelp" xml:space="preserve">
-    <value>Välj om du vill förstora (skala) text, appar och andra objekt på anslutna 
+    <value>Välj om du vill förstora (skala) text, appar och andra objekt på anslutna
 bildskärmar med 25%. Om inget väljs återgår skärmarna till sitt standardvärde.
 
-Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger). 
+Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+
+Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+
+Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1.</value>
+  </data>
+  <data name="ShortHelpForcedScaling" xml:space="preserve">
+    <value>En av de anslutna skärmarna är stor och skalas därför automatiskt för bättre läsbarhet.
+
+Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+
+Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+
+Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1.</value>
+  </data>
+  <data name="ShortHelpConferenceRoom" xml:space="preserve">
+    <value>Konferensrumsläge har identifierats. Den interna (bärbara) skärmen sätts som huvudskärm och den anslutna skärmen skalas automatiskt för bättre läsbarhet.
+
+Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
+
+Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
+
+Exempel: Om du har tre skärmar (inkl. den bärbara uppfälld) och
+det står 2-3-1 på skärmarna (från vänster till höger) skriver du in 2 3 1.</value>
+  </data>
+  <data name="ShortHelpConferenceRoomOptionalScaling" xml:space="preserve">
+    <value>Konferensrumsläge är aktiverat. Den interna (bärbara) skärmen sätts som huvudskärm.
+
+Välj om du vill förstora (skala) text, appar och andra objekt på anslutna
+bildskärmar med 25%. Om inget väljs återgår skärmarna till sitt standardvärde.
+
+Skriv sedan in siffrorna du ser på skärmarna i den ordning du läser dem (från vänster till höger).
 
 Programmet kommer sedan automatiskt ställa in skärmarna och du kan börja jobba.
 

@@ -22,6 +22,10 @@ namespace BroDisplaySetup
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
 
             List<string> screenInfo = new();
+            if (!string.IsNullOrWhiteSpace(Displays.ConferenceRoomCandidateSerial))
+            {
+                screenInfo.Add($"Konferensrumsläge: {(Displays.ConferenceRoomModeActive ? "Ja" : "Nej")}");
+            }
             screenInfo.Add("--------------------------");
             foreach (var displayInfo in displayInfoList)
             {

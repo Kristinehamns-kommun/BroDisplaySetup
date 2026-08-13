@@ -25,6 +25,15 @@ namespace BroDisplaySetup
         public Size OptimalResolution { get; set; }
         public DPIScalingInfo DpiScalingInfo { get; set; }
 
+        // Physical screen dimensions in cm, from EDID via WmiMonitorBasicDisplayParams. 0x0 if unreported.
+        public int PhysicalWidthCm { get; set; }
+        public int PhysicalHeightCm { get; set; }
+
+        public double DiagonalInches =>
+            (PhysicalWidthCm == 0 && PhysicalHeightCm == 0)
+                ? 0
+                : Math.Sqrt(PhysicalWidthCm * PhysicalWidthCm + PhysicalHeightCm * PhysicalHeightCm) / 2.54;
+
         public override string ToString()
         {
             string internalStringValue = Internal ? "Yes" : "No";
@@ -40,6 +49,7 @@ namespace BroDisplaySetup
                    $"Internal: {internalStringValue}{Environment.NewLine}" +
                    $"Bounds: {Bounds}{Environment.NewLine}" +
                    $"OptimalResolution: {OptimalResolution.Width} x {OptimalResolution.Height}{Environment.NewLine}" +
+                   $"PhysicalSize: {PhysicalWidthCm} x {PhysicalHeightCm} cm ({DiagonalInches:0.#}\" diagonal){Environment.NewLine}" +
                    $"DpiScalingInfo: {DpiScalingInfo.Current}% (min: {DpiScalingInfo.Minimum}%, max: {DpiScalingInfo.Maximum}%, recommended: {DpiScalingInfo.Recommended}%)";
         }
 
@@ -70,6 +80,18 @@ namespace BroDisplaySetup
             foreach (var dpi in dpiScales)
             {
                 System.Diagnostics.Debug.WriteLine("{0}={1} DPI (min:{2}, max:{3})", dpi.Key, dpi.Value.Current, dpi.Value.Minimum, dpi.Value.Maximum);
+            }
+
+            // Physical screen dimensions (cm), from EDID, keyed by the same InstanceName as WmiMonitorID.
+            var physicalSizeQuery = new ObjectQuery("SELECT * FROM WmiMonitorBasicDisplayParams");
+            var physicalSizeSearcher = new ManagementObjectSearcher(scope, physicalSizeQuery);
+            var physicalSizeByInstanceName = new Dictionary<string, (int WidthCm, int HeightCm)>();
+            foreach (ManagementObject basicParams in physicalSizeSearcher.Get())
+            {
+                string paramsInstanceName = (string)basicParams["InstanceName"];
+                int widthCm = Convert.ToInt32(basicParams["MaxHorizontalImageSize"]);
+                int heightCm = Convert.ToInt32(basicParams["MaxVerticalImageSize"]);
+                physicalSizeByInstanceName[paramsInstanceName] = (widthCm, heightCm);
             }
 
             foreach (ManagementObject monitor in wmiMonitorCollection)
@@ -117,6 +139,8 @@ namespace BroDisplaySetup
                     }
                 }   
 
+                physicalSizeByInstanceName.TryGetValue(instanceName, out var physicalSize);
+
                 var displayInfo = new DisplayInfo
                 {
                     UserFriendlyName = userFriendlyName,
@@ -127,7 +151,9 @@ namespace BroDisplaySetup
                     InstanceName = instanceName,
                     VideoOutputTechnology = outputTechnology,
                     Internal = internalMonitor,
-                    DpiScalingInfo = deviceDPIScalingInfo
+                    DpiScalingInfo = deviceDPIScalingInfo,
+                    PhysicalWidthCm = physicalSize.WidthCm,
+                    PhysicalHeightCm = physicalSize.HeightCm
                 };
 
 

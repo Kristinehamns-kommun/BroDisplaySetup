@@ -26,7 +26,8 @@ namespace BroDisplaySetup
             public uint Minimum { get; set; }
             public uint Maximum { get; set; }
             public uint Current { get; set; }
-            public uint Recommended { get; set; }
+            public uint 
+                Recommended { get; set; }
             public bool InitDone { get; set; }
 
             public DPIScalingInfo()

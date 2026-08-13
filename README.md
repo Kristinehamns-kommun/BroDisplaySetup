@@ -32,6 +32,17 @@ To use BroDisplaySetup, follow these steps:
     - The external monitor furthest to the left will automatically become the primary monitor (The laptop's internal monitor will never become primary if there is one or more external monitors).
 1. Recommended (optimal) resolution for all connected screens is automatically applied.
 
+### Conference room screens
+
+If exactly one large external screen (roughly 50" diagonal or larger) is connected, BroDisplaySetup will:
+
+- Automatically scale the screen to 250%, without needing to opt in via the "scale displays" checkbox.
+- Show a "Konferensrum: gör den bärbara skärmen till huvudskärm" checkbox in its place, checked by default. Leaving it checked sets the laptop's internal screen as the primary monitor instead of the usual rule where the left-most external screen becomes primary - since the person running the program usually isn't sitting in front of this screen. Uncheck it if this large screen isn't actually a shared/conference room screen.
+
+Your choice is remembered per screen (by its serial number), so the checkbox defaults to your last answer the next time you dock into the same room - it does not always default to checked. You can also flip it (or force conference room mode for a setup the size detection didn't flag - eg. a smaller shared screen, or more than one external monitor) via the **Avancerat > Konferensrumsläge** menu checkbox, which stays in sync with the inline checkbox whichever one you use. To reset all remembered answers for every screen, use **Avancerat > Glöm konferensrumsval...**.
+
+This detection is based on the screen's physical size as reported by the screen itself over EDID; some screens/adapters may not report this correctly, in which case the screen's resolution (4K) is used as a fallback signal instead.
+
 ## Compatibility
 
 BroDisplaySetup is compatible with Windows 10 and Windows 11.

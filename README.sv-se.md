@@ -31,6 +31,17 @@ För att använda BroDisplaySetup, följ dessa steg:
     - Den externa bildskärmen längst till vänster kommer automatiskt att bli den primära bildskärmen (Laptopens interna bildskärm kommer aldrig att bli primär om det finns en eller flera externa bildskärmar). 
 1. Rekommenderad (optimal) upplösning för alla anslutna skärmar tillämpas automatiskt.
 
+### Konferensrumsskärmar
+
+Om exakt en stor extern skärm (ungefär 50 tum diagonalt eller större) är ansluten kommer BroDisplaySetup att:
+
+- Automatiskt skala skärmen till 250%, utan att det behöver kryssas i rutan "skala skärmar".
+- Visa kryssrutan "Konferensrum: gör den bärbara skärmen till huvudskärm" i dess ställe, ikryssad som standard. Om den lämnas ikryssad sätts laptopens interna skärm som primär skärm, istället för den vanliga regeln att den externa skärmen längst till vänster blir primär - eftersom den som kör programmet oftast inte sitter framför den här skärmen. Kryssa ur den om den här stora skärmen faktiskt inte är en delad konferensrumsskärm.
+
+Ditt val sparas per skärm (med dess serienummer), så att kryssrutan visar ditt senaste svar nästa gång du ansluter till samma rum - den är inte alltid ikryssad som standard. Du kan även ändra den (eller aktivera konferensrumsläge för en uppställning som storleksdetekteringen inte flaggat - t.ex. en mindre delad skärm, eller fler än en extern skärm) via kryssrutan **Avancerat > Konferensrumsläge**, som hålls synkroniserad med kryssrutan i gränssnittet oavsett vilken av dem du använder. För att glömma alla sparade svar för alla skärmar, använd **Avancerat > Glöm konferensrumsval...**.
+
+Denna identifiering baseras på skärmens fysiska storlek som rapporteras av skärmen själv via EDID; vissa skärmar/adaptrar rapporterar eventuellt inte detta korrekt, i vilket fall skärmens upplösning (4K) används som en reserv-signal istället.
+
 ## Kompatibilitet
 
 BroDisplaySetup är kompatibelt med Windows 10 och Windows 11.

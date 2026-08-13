@@ -38,7 +38,26 @@ namespace BroDisplaySetup
 
                 int maxHelpTextWidth = appForm.Width - (2 * padding) - logoWidth;
 
-                string helpText = Properties.Resources.ShortHelp;
+                string helpText;
+                if (Displays.ConferenceRoomModeActive)
+                {
+                    // Conference room mode can be active either together with forced scaling (the
+                    // common case - a single large external display triggered both) or on its own
+                    // (the user turned it on manually via the menu fallback for a setup the size
+                    // heuristic didn't flag), so the scaling paragraph still needs to differ between
+                    // the two.
+                    helpText = Displays.ScaleDisplaysOptionShown
+                        ? Properties.Resources.ShortHelpConferenceRoomOptionalScaling
+                        : Properties.Resources.ShortHelpConferenceRoom;
+                }
+                else if (!Displays.ScaleDisplaysOptionShown)
+                {
+                    helpText = Properties.Resources.ShortHelpForcedScaling;
+                }
+                else
+                {
+                    helpText = Properties.Resources.ShortHelp;
+                }
 
                 using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, (float)(SystemFonts.DefaultFont.SizeInPoints * 2), FontStyle.Regular))
                 using (Brush brush = new SolidBrush(Color.Black))
@@ -62,8 +81,21 @@ namespace BroDisplaySetup
             ToolStripMenuItem advancedMenuItem = new ToolStripMenuItem("Avancerat");
             menuStrip.Items.Add(advancedMenuItem);
 
-            ToolStripMenuItem showScreenInfoMenuItem = new ToolStripMenuItem("Visa sk�rminformation...");
+            ToolStripMenuItem showScreenInfoMenuItem = new ToolStripMenuItem("Visa skärminformation...");
             advancedMenuItem.DropDownItems.Add(showScreenInfoMenuItem);
+
+            ToolStripMenuItem forgetConferenceRoomMenuItem = new ToolStripMenuItem("Glöm konferensrumsval...");
+            advancedMenuItem.DropDownItems.Add(forgetConferenceRoomMenuItem);
+
+            // Mirrors the inline conference-room checkbox shown when a single large external display
+            // is detected, and stays enabled even when it isn't - a manual fallback for setups the
+            // size heuristic doesn't flag (eg. a smaller shared screen, or more than one external).
+            ToolStripMenuItem conferenceRoomModeMenuItem = new ToolStripMenuItem("Konferensrumsläge")
+            {
+                CheckOnClick = true,
+                Checked = Displays.ConferenceRoomModeActive,
+            };
+            advancedMenuItem.DropDownItems.Add(conferenceRoomModeMenuItem);
 
             ToolStripMenuItem helpMenuItem = new ToolStripMenuItem("?");
 
@@ -84,6 +116,37 @@ namespace BroDisplaySetup
                 // Create and show the new form for about
                 About aboutForm = new About();
                 aboutForm.ShowDialog();
+            };
+
+            forgetConferenceRoomMenuItem.Click += (s, e) =>
+            {
+                DialogResult confirmForget = MessageBox.Show(
+                    "Detta glömmer alla sparade konferensrumsval för alla skärmar. Fortsätta?",
+                    "Glöm konferensrumsval",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmForget == DialogResult.Yes)
+                {
+                    ConferenceRoomPreferences.ForgetAll();
+                }
+            };
+
+            conferenceRoomModeMenuItem.CheckedChanged += (s, e) =>
+            {
+                Displays.SetConferenceRoomMode(conferenceRoomModeMenuItem.Checked);
+                appForm.Invalidate();
+            };
+
+            // Keep this menu item in sync if the user instead uses the inline checkbox (shown when a
+            // single large external display is detected) to change the answer.
+            Displays.ConferenceRoomModeChanged += newValue =>
+            {
+                if (conferenceRoomModeMenuItem.Checked != newValue)
+                {
+                    conferenceRoomModeMenuItem.Checked = newValue;
+                }
+                appForm.Invalidate();
             };
 
             appForm.Controls.Add(menuStrip);

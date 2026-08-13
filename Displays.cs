@@ -12,6 +12,53 @@ namespace BroDisplaySetup
 {
     class Displays
     {
+        // Whether the "scale displays" checkbox was shown for the most recent
+        // ConfigureDisplayOrderAndArrangeForm() call. Read by Program.cs to pick help text that
+        // matches what's actually on screen - the checkbox is hidden when scaling is forced
+        // automatically (see forceAutoScaleExternalDisplays / IsLargeRoomDisplay below).
+        public static bool ScaleDisplaysOptionShown { get; private set; } = true;
+
+        // Whether the most recent ConfigureDisplayOrderAndArrangeForm() call has conference room
+        // mode active - ie. the internal panel is kept primary instead of the usual
+        // left-most-external rule. Defaults to checked whenever a single large external display is
+        // detected (see ConferenceRoomCandidateSerial), but can be overridden either via the inline
+        // checkbox shown in that case, or via the "Avancerat > Konferensrumsläge" menu toggle (which
+        // stays enabled even without a detected candidate, as a manual fallback). Read by Program.cs
+        // to call this out explicitly in the help text, and read live (not captured) when the
+        // arrangement is actually applied, so a change made after the form was built still takes effect.
+        public static bool ConferenceRoomModeActive { get; private set; } = false;
+
+        // The serial of the single large external display detected this run, if any - null when
+        // there's no such candidate (no large external, or more than one, or the menu fallback is
+        // being used instead). Preferences are only persisted when this is set, since there's no
+        // single display to key the answer against otherwise.
+        public static string ConferenceRoomCandidateSerial { get; private set; } = null;
+
+        // Raised whenever SetConferenceRoomMode actually changes the active value, so the inline
+        // checkbox and the "Avancerat > Konferensrumsläge" menu item - two independent controls for
+        // the same underlying state - can stay in sync with whichever one the user last touched.
+        public static event Action<bool> ConferenceRoomModeChanged;
+
+        // Lets the user override the conference-room decision, either via the inline checkbox (only
+        // shown when a single large external display is detected) or the always-enabled menu
+        // fallback. Persists the new answer for the current candidate display, if any.
+        public static void SetConferenceRoomMode(bool isConferenceRoom)
+        {
+            if (ConferenceRoomModeActive == isConferenceRoom)
+            {
+                return;
+            }
+
+            ConferenceRoomModeActive = isConferenceRoom;
+
+            if (!string.IsNullOrWhiteSpace(ConferenceRoomCandidateSerial))
+            {
+                ConferenceRoomPreferences.SetPreference(ConferenceRoomCandidateSerial, isConferenceRoom);
+            }
+
+            ConferenceRoomModeChanged?.Invoke(isConferenceRoom);
+        }
+
         public static List<String> GetAutoArrangedLTRScreenDeviceNames()
         {
             List<Screen> screenList = Screen.AllScreens.ToList();
@@ -336,22 +383,86 @@ namespace BroDisplaySetup
                 int scaleFontSize = primaryForm.Height / 64;
                 string scaleText = Properties.Resources.ScaleDisplays;
 
-                ScalableCheckBox autoScaleDisplaysCheckBox = new()
+                // When an external display's own physical size already calls for >100% scaling
+                // (eg. 4K conference room screens, which Windows itself recommends at 300% - we
+                // apply 250% instead, see applyForcedScalingForExternalDisplays), there's nothing
+                // for the user to opt into - just apply it and skip the checkbox entirely.
+                List<DisplayInfo> displayInfoListForScaling = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
+                List<DisplayInfo> externalDisplaysForScaling = displayInfoListForScaling.Where(d => !d.Internal).ToList();
+                bool forceAutoScaleExternalDisplays = externalDisplaysForScaling.Any(IsLargeRoomDisplay);
+                ScaleDisplaysOptionShown = !forceAutoScaleExternalDisplays;
+
+                // If there's exactly one large external display, default conference room mode to
+                // checked - the internal panel becomes primary instead of the usual left-most-external
+                // rule, since the user isn't sitting at this external display. A remembered answer for
+                // this display (if any) takes priority over that default. Either way, the user can
+                // still override it below via the inline checkbox or the menu fallback.
+                bool keepInternalPrimary = false;
+                ConferenceRoomCandidateSerial = null;
+                if (externalDisplaysForScaling.Count == 1 && IsLargeRoomDisplay(externalDisplaysForScaling[0]))
                 {
-                    Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
-                    Tag = textboxIndex,
-                    Text = scaleText,
-                    Margin = new Padding(0, 0, 0, 0),
-                };
+                    DisplayInfo candidateConferenceRoomDisplay = externalDisplaysForScaling[0];
+                    ConferenceRoomCandidateSerial = candidateConferenceRoomDisplay.Serial;
+                    bool? rememberedIsConferenceRoom = ConferenceRoomPreferences.GetPreference(candidateConferenceRoomDisplay.Serial);
+                    keepInternalPrimary = rememberedIsConferenceRoom ?? true;
+                }
+                ConferenceRoomModeActive = keepInternalPrimary;
 
-                autoScaleDisplaysCheckBox.SetSizeToRequired();
+                ScalableCheckBox autoScaleDisplaysCheckBox = null;
 
-                Point scaleDisplaysCheckBoxLoc = new Point((primaryForm.Width - autoScaleDisplaysCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
-                //scaleDisplaysCheckBoxLoc.Offset(0, firstTextBox.Height+10);
-                scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + 20));
+                if (!forceAutoScaleExternalDisplays)
+                {
+                    autoScaleDisplaysCheckBox = new()
+                    {
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
+                        Tag = textboxIndex,
+                        Text = scaleText,
+                        Margin = new Padding(0, 0, 0, 0),
+                    };
 
-                autoScaleDisplaysCheckBox.Location = scaleDisplaysCheckBoxLoc;
-                primaryForm.Controls.Add(autoScaleDisplaysCheckBox);
+                    autoScaleDisplaysCheckBox.SetSizeToRequired();
+
+                    Point scaleDisplaysCheckBoxLoc = new Point((primaryForm.Width - autoScaleDisplaysCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
+                    //scaleDisplaysCheckBoxLoc.Offset(0, firstTextBox.Height+10);
+                    scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + 20));
+
+                    autoScaleDisplaysCheckBox.Location = scaleDisplaysCheckBoxLoc;
+                    primaryForm.Controls.Add(autoScaleDisplaysCheckBox);
+                }
+                else if (ConferenceRoomCandidateSerial != null)
+                {
+                    // forceAutoScaleExternalDisplays is guaranteed true here (the single large
+                    // external display that qualifies as a conference-room candidate also forces
+                    // scaling), so this occupies the same slot the scale checkbox would otherwise -
+                    // the two never need to coexist.
+                    ScalableCheckBox conferenceRoomCheckBox = new()
+                    {
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
+                        Tag = textboxIndex,
+                        Text = Properties.Resources.ConferenceRoomCheckboxText,
+                        Margin = new Padding(0, 0, 0, 0),
+                        IsChecked = keepInternalPrimary,
+                    };
+
+                    conferenceRoomCheckBox.SetSizeToRequired();
+
+                    Point conferenceRoomCheckBoxLoc = new Point((primaryForm.Width - conferenceRoomCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
+                    conferenceRoomCheckBoxLoc.Offset(0, -(conferenceRoomCheckBox.Height + 20));
+
+                    conferenceRoomCheckBox.Location = conferenceRoomCheckBoxLoc;
+
+                    conferenceRoomCheckBox.CheckedChanged += (s, e) =>
+                    {
+                        SetConferenceRoomMode(conferenceRoomCheckBox.IsChecked);
+                        primaryForm.Invalidate();
+                    };
+
+                    // Keep this checkbox in sync if the user instead uses the always-available
+                    // "Avancerat > Konferensrumsläge" menu fallback to change the answer.
+                    ConferenceRoomModeChanged += newValue => conferenceRoomCheckBox.IsChecked = newValue;
+
+                    primaryForm.Controls.Add(conferenceRoomCheckBox);
+                }
 
                 // Calculate the top-left point of the string to draw it centered in the form
                 //float formCenterX = (form.Width - stringSize.Width) / 2;
@@ -385,9 +496,14 @@ namespace BroDisplaySetup
                             screenOrder++;
                         }
 
-                        ArrangeLTRWithAutoPrimary(userOrderedDeviceNames);
+                        // Read live rather than the captured local, so a menu toggle of
+                        // ConferenceRoomModeActive made after this closure was created (but before
+                        // the user finished typing the screen order) still takes effect.
+                        ArrangeLTRWithAutoPrimary(userOrderedDeviceNames, ConferenceRoomModeActive);
 
-                        if (autoScaleDisplaysCheckBox.IsChecked == true) {
+                        if (forceAutoScaleExternalDisplays) {
+                            applyForcedScalingForExternalDisplays();
+                        } else if (autoScaleDisplaysCheckBox?.IsChecked == true) {
                             autoscaleExternalDisplays();
                         } else
                         {
@@ -412,6 +528,9 @@ namespace BroDisplaySetup
             return null;
         }
 
+        // Applies the flat opt-in scaling the "scale displays" checkbox represents. Only ever called
+        // when that checkbox is shown and checked, which only happens when no external display is
+        // already forced (see applyForcedScalingForExternalDisplays) - so a flat 125% is safe for all of them.
         public static void autoscaleExternalDisplays()
         {
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
@@ -427,6 +546,46 @@ namespace BroDisplaySetup
             }
         }
 
+        // Applies scaling automatically, without any checkbox/opt-in, when at least one external
+        // display's own optimal resolution already calls for more than the 100% default (eg. 4K
+        // conference room screens, which Windows itself recommends at 300% - 250% is used instead
+        // since 300% was judged excessive for normal use). Displays that don't need it are left at
+        // the 100% default - there's no user opt-in for them in this path, so they must not be
+        // bumped to the checkbox's 125% value.
+        public static void applyForcedScalingForExternalDisplays()
+        {
+            List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
+
+            foreach (var displayInfo in displayInfoList)
+            {
+                if (displayInfo.Internal)
+                {
+                    continue;
+                }
+
+                uint targetPercent = IsLargeRoomDisplay(displayInfo) ? 250u : 100u;
+                Extern.Displays.SetDpiScaling(displayInfo.PnpDeviceId, targetPercent);
+            }
+        }
+
+        // A display physically large enough to be a shared/room screen rather than a personal
+        // monitor (eg. a 65" conference room display) - the trigger for both forced DPI scaling
+        // and the conference-room checkbox/primary-screen behavior. Diagonal size is a better
+        // signal for "physically huge" than resolution (a 27" monitor can be 4K too), but some
+        // EDIDs don't report physical size - fall back to the old resolution-based heuristic (see
+        // DPIScalingInfo.Recommended for why the OS's own DPI recommendation isn't used here).
+        private static bool IsLargeRoomDisplay(DisplayInfo displayInfo)
+        {
+            if (displayInfo.DiagonalInches > 0)
+            {
+                return displayInfo.DiagonalInches >= 50;
+            }
+
+            int longSide = Math.Max(displayInfo.OptimalResolution.Width, displayInfo.OptimalResolution.Height);
+            int shortSide = Math.Min(displayInfo.OptimalResolution.Width, displayInfo.OptimalResolution.Height);
+            return longSide >= 3840 && shortSide >= 2160;
+        }
+
         public static void resetScalingForExternalDisplays()
         {
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
@@ -440,7 +599,7 @@ namespace BroDisplaySetup
             }
         }
 
-        public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR) {
+        public static void ArrangeLTRWithAutoPrimary(List<String> screenDeviceNamesLTR, bool keepInternalPrimary = false) {
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
 
             if (displayInfoList.Count == 1 && displayInfoList[0].Internal)
@@ -451,28 +610,41 @@ namespace BroDisplaySetup
 
             int primaryDisplayIndex = 0;
 
-            foreach (var deviceName in screenDeviceNamesLTR)
+            if (keepInternalPrimary)
             {
-                bool displayInternal = false;
+                int internalDisplayIndex = screenDeviceNamesLTR.FindIndex(deviceName =>
+                    displayInfoList.Any(d => d.Internal && d.DeviceName.ToUpper().Equals(deviceName.ToUpper())));
 
-                foreach(var displayInfo in displayInfoList)
+                if (internalDisplayIndex >= 0)
                 {
-                    if (displayInfo.DeviceName.ToUpper().Equals(deviceName.ToUpper())) {
-                        if (displayInfo.Internal)
-                        {
-                            displayInternal = true;
+                    primaryDisplayIndex = internalDisplayIndex;
+                }
+            }
+            else
+            {
+                foreach (var deviceName in screenDeviceNamesLTR)
+                {
+                    bool displayInternal = false;
+
+                    foreach(var displayInfo in displayInfoList)
+                    {
+                        if (displayInfo.DeviceName.ToUpper().Equals(deviceName.ToUpper())) {
+                            if (displayInfo.Internal)
+                            {
+                                displayInternal = true;
+                            }
                         }
                     }
-                }
 
 
-                if (displayInternal)
-                {
-                    primaryDisplayIndex++;
-                }
-                else
-                {
-                    break;
+                    if (displayInternal)
+                    {
+                        primaryDisplayIndex++;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 

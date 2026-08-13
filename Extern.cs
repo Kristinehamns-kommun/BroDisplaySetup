@@ -487,6 +487,25 @@ namespace BroDisplaySetup
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
             public string monitorDevicePath;
         }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct DISPLAYCONFIG_SOURCE_DEVICE_NAME
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string viewGdiDeviceName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_TARGET_PREFERRED_MODE
+        {
+            public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+            public uint width;
+            public uint height;
+            public DISPLAYCONFIG_TARGET_MODE targetMode;
+        }
+
         public struct DISPLAYCONFIG_SOURCE_DPI_SCALE_GET
         {
             public DISPLAYCONFIG_DEVICE_INFO_CUSTOM_HEADER header;
@@ -559,6 +578,12 @@ namespace BroDisplaySetup
 
             [DllImport("user32.dll")]
             public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName);
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DEVICE_NAME sourceName);
+
+            [DllImport("user32.dll")]
+            public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_PREFERRED_MODE preferredMode);
 
             [DllImport("user32.dll")]
             public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DPI_SCALE_GET dpiScaleGet);
@@ -822,41 +847,137 @@ namespace BroDisplaySetup
 
             public static DEVMODE GetOptimalDisplayMode(string deviceName)
             {
-                DEVMODE mode = new DEVMODE();
-                mode.dmSize = (ushort)Marshal.SizeOf(mode);
+                // Prefer the display's own native/recommended resolution - the same one Windows
+                // itself marks "Recommended" in Settings, sourced from the EDID preferred-timing
+                // entry - over raw pixel count. Some panels additionally accept (without properly
+                // scaling - they crop it instead) a wider "signal" resolution with a higher nominal
+                // pixel count than their native panel resolution (eg. a native 3840x2160 UHD panel
+                // that also accepts a 4096x2160 DCI 4K input), so simply maximizing width*height
+                // can pick a mode the display can't actually show correctly.
+                (uint Width, uint Height)? preferredResolution = GetPreferredDisplayMode(deviceName);
 
-                int modeIndex = 0;
-                int bestModeIndex = 0;
-                uint bestScore = 0;
+                int? bestModeIndex = preferredResolution.HasValue
+                    ? FindBestDisplayModeIndex(deviceName, mode =>
+                        mode.dmPelsWidth == preferredResolution.Value.Width && mode.dmPelsHeight == preferredResolution.Value.Height)
+                    : null;
 
-                //Console.WriteLine("Get optimal displaymode " + deviceName);
+                // Fall back to the original "biggest mode wins" heuristic if the display's
+                // preferred resolution couldn't be determined, or none of its enumerated modes
+                // actually match it.
+                bestModeIndex ??= FindBestDisplayModeIndex(deviceName, mode => true);
 
-                while (0 != User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode))
-                {
-                    uint currentModeScore = ComputeDisplayModeScore(deviceName, mode, false);
-
-                    //Console.WriteLine("Found a mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz");
-
-                    if (currentModeScore > bestScore)
-                    {
-                        bestModeIndex = modeIndex;
-                        bestScore = currentModeScore;
-                        System.Diagnostics.Debug.WriteLine("Found a better mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz" + " at index " + modeIndex);
-                    }
-                    modeIndex++;
-                }
-
-                if (bestModeIndex < 0)
+                if (bestModeIndex == null)
                 {
                     throw new InvalidOperationException("An error occurred getting optimal display mode for '" + deviceName + "'.");
                 }
 
-                if (0 != User_32.EnumDisplaySettings(deviceName, bestModeIndex, ref mode))
+                DEVMODE mode = new DEVMODE();
+                mode.dmSize = (ushort)Marshal.SizeOf(mode);
+                if (0 != User_32.EnumDisplaySettings(deviceName, bestModeIndex.Value, ref mode))
                 {
                     return mode;
                 }
 
                 throw new InvalidOperationException("An error occurred getting optimal display mode for '" + deviceName + "' at index " + bestModeIndex + ".");
+            }
+
+            private static int? FindBestDisplayModeIndex(string deviceName, Func<DEVMODE, bool> filter)
+            {
+                DEVMODE mode = new DEVMODE();
+                mode.dmSize = (ushort)Marshal.SizeOf(mode);
+
+                int modeIndex = 0;
+                int? bestModeIndex = null;
+                uint bestScore = 0;
+
+                while (0 != User_32.EnumDisplaySettings(deviceName, modeIndex, ref mode))
+                {
+                    if (filter(mode))
+                    {
+                        uint currentModeScore = ComputeDisplayModeScore(deviceName, mode, false);
+
+                        if (bestModeIndex == null || currentModeScore > bestScore)
+                        {
+                            bestModeIndex = modeIndex;
+                            bestScore = currentModeScore;
+                            System.Diagnostics.Debug.WriteLine("Found a better mode for " + deviceName + ": " + mode.dmPelsWidth + "x" + mode.dmPelsHeight + " at " + mode.dmDisplayFrequency + "Hz" + " at index " + modeIndex);
+                        }
+                    }
+                    modeIndex++;
+                }
+
+                return bestModeIndex;
+            }
+
+            /**
+             * Returns the display's native/preferred resolution as reported by Windows via the CCD
+             * API (DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE) - the same source Windows
+             * itself uses to mark a resolution "Recommended" in Settings, straight from the EDID
+             * preferred-timing entry. Returns null if it couldn't be determined (eg. the device
+             * isn't found among active CCD paths, or the driver doesn't support the query).
+             */
+            public static (uint Width, uint Height)? GetPreferredDisplayMode(string deviceName)
+            {
+                uint pathArraySize = 0;
+                uint modeArraySize = 0;
+
+                int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, out pathArraySize, out modeArraySize);
+                if (bufferSizeResult != 0)
+                {
+                    return null;
+                }
+
+                DISPLAYCONFIG_PATH_INFO[] pathArray = new DISPLAYCONFIG_PATH_INFO[pathArraySize];
+                DISPLAYCONFIG_MODE_INFO[] modeArray = new DISPLAYCONFIG_MODE_INFO[modeArraySize];
+                int queryResult = User_32.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, ref pathArraySize, pathArray, ref modeArraySize, modeArray, IntPtr.Zero);
+                if (queryResult != 0)
+                {
+                    return null;
+                }
+
+                foreach (DISPLAYCONFIG_PATH_INFO path in pathArray)
+                {
+                    DISPLAYCONFIG_SOURCE_DEVICE_NAME sourceName = new DISPLAYCONFIG_SOURCE_DEVICE_NAME
+                    {
+                        header = new DISPLAYCONFIG_DEVICE_INFO_HEADER
+                        {
+                            type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+                            size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME)),
+                            adapterId = path.sourceInfo.adapterId,
+                            id = path.sourceInfo.id,
+                        },
+                    };
+
+                    if (User_32.DisplayConfigGetDeviceInfo(ref sourceName) != 0)
+                    {
+                        continue;
+                    }
+
+                    if (!string.Equals(sourceName.viewGdiDeviceName, deviceName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    DISPLAYCONFIG_TARGET_PREFERRED_MODE preferredMode = new DISPLAYCONFIG_TARGET_PREFERRED_MODE
+                    {
+                        header = new DISPLAYCONFIG_DEVICE_INFO_HEADER
+                        {
+                            type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE,
+                            size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_TARGET_PREFERRED_MODE)),
+                            adapterId = path.targetInfo.adapterId,
+                            id = path.targetInfo.id,
+                        },
+                    };
+
+                    if (User_32.DisplayConfigGetDeviceInfo(ref preferredMode) != 0)
+                    {
+                        return null;
+                    }
+
+                    return (preferredMode.width, preferredMode.height);
+                }
+
+                return null;
             }
 
 

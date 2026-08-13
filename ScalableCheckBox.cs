@@ -14,14 +14,22 @@ namespace BroDisplaySetup
 {
     public class ScalableCheckBox : UserControl
     {
+        public event EventHandler CheckedChanged;
+
         private bool _isChecked;
         public bool IsChecked
         {
             get => _isChecked;
             set
             {
+                if (_isChecked == value)
+                {
+                    return;
+                }
+
                 _isChecked = value;
                 Invalidate(); // Redraw control to reflect state change
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -42,8 +50,14 @@ namespace BroDisplaySetup
 
             int checkBoxTextOffset = 5;
 
+            // TextRenderer.MeasureText (GDI) and the Graphics.DrawString call in OnPaint (GDI+) can
+            // disagree slightly on font metrics, which without any slack clips the last character or
+            // two - add a safety margin proportional to font size so it still covers the gap at the
+            // larger font sizes used on bigger/higher-DPI screens.
+            int textWidthSafetyMargin = Math.Max(4, Font.Height / 4);
+
             // Calculate the total width required
-            int requiredWidth = getCheckBoxRect().Right + checkBoxTextOffset + textWidth;
+            int requiredWidth = getCheckBoxRect().Right + checkBoxTextOffset + textWidth + textWidthSafetyMargin;
 
             return requiredWidth;
         }
