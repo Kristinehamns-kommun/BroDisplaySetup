@@ -42,32 +42,39 @@ namespace BroDisplaySetup
             Cursor = Cursors.Hand;
         }
 
-        // Inside your UserControl class or relevant method
+        // Measures with Graphics.MeasureString (GDI+), the same API OnPaint draws with via
+        // DrawString - measuring with TextRenderer (GDI) instead disagreed slightly on font
+        // metrics, clipping the last character or two. Requires the control to already have its
+        // final Parent (so its DPI context matches OnPaint's) - call after adding it to its Form,
+        // not before.
         public int GetRequiredWidth()
         {
-            // Measure the size of the text
-            int textWidth = TextRenderer.MeasureText(this.Text, this.Font).Width;
+            float textWidth;
+            using (Graphics g = this.CreateGraphics())
+            {
+                textWidth = g.MeasureString(this.Text, this.Font).Width;
+            }
 
             int checkBoxTextOffset = 5;
 
-            // TextRenderer.MeasureText (GDI) and the Graphics.DrawString call in OnPaint (GDI+) can
-            // disagree slightly on font metrics, which without any slack clips the last character or
-            // two - add a safety margin proportional to font size so it still covers the gap at the
-            // larger font sizes used on bigger/higher-DPI screens.
-            int textWidthSafetyMargin = Math.Max(4, Font.Height / 4);
+            // Small safety margin for anti-aliasing/rounding, not for a GDI/GDI+ metrics gap.
+            int textWidthSafetyMargin = 2;
 
             // Calculate the total width required
-            int requiredWidth = getCheckBoxRect().Right + checkBoxTextOffset + textWidth + textWidthSafetyMargin;
+            int requiredWidth = getCheckBoxRect().Right + checkBoxTextOffset + (int)Math.Ceiling(textWidth) + textWidthSafetyMargin;
 
             return requiredWidth;
         }
 
         public int GetRequiredHeight()
         {
-            // Measure the size of the text
-            int textHeight = TextRenderer.MeasureText(this.Text, this.Font).Height;
+            float textHeight;
+            using (Graphics g = this.CreateGraphics())
+            {
+                textHeight = g.MeasureString(this.Text, this.Font).Height;
+            }
             // Calculate the total height required
-            int requiredHeight = Math.Max(getCheckBoxRect().Bottom, textHeight);
+            int requiredHeight = Math.Max(getCheckBoxRect().Bottom, (int)Math.Ceiling(textHeight));
             return requiredHeight + 5;
         }
 

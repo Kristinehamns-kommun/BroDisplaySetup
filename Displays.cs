@@ -12,6 +12,15 @@ namespace BroDisplaySetup
 {
     class Displays
     {
+        // All manually-sized fonts below are built with GraphicsUnit.Pixel (not the default
+        // Points) so they render as an exact, DPI-independent pixel count - a screen-proportional
+        // size (eg. screenBounds.Height/6) that stays the same fraction of the screen regardless
+        // of DPI, rather than growing when the process happens to be on a scaled display. Their
+        // numeric values were originally tuned as Points at 96 DPI though, which silently baked in
+        // a 96/72 points-to-pixels multiplier - this constant reproduces that same pixel outcome so
+        // switching to Pixel units doesn't also shrink everything at the same time.
+        private const double PointsToPixelsAt96Dpi = 96.0 / 72.0;
+
         // Whether the "scale displays" checkbox was shown for the most recent
         // ConfigureDisplayOrderAndArrangeForm() call. Read by Program.cs to pick help text that
         // matches what's actually on screen - the checkbox is hidden when scaling is forced
@@ -135,6 +144,12 @@ namespace BroDisplaySetup
                 System.Diagnostics.Debug.WriteLine("Bounds of " + screen.DeviceName + ": " + screenBounds.Left + ", " + screenBounds.Top + ", " + screenBounds.Width + ", " + screenBounds.Height);
 
                 Form form = new Form();
+                // WinForms defaults new Forms to AutoScaleMode.Font, which under PerMonitorV2
+                // applies its own implicit rescale of everything drawn on the Form whenever DPI
+                // differs from the design baseline - this fights the manual, screen-proportional
+                // GraphicsUnit.Pixel sizing used throughout this Form (digit, textboxes, checkboxes,
+                // help text), which is already correct for the actual DPI/resolution on its own.
+                form.AutoScaleMode = AutoScaleMode.None;
                 form.FormBorderStyle = FormBorderStyle.None;
                 form.StartPosition = FormStartPosition.Manual;
                 form.Bounds = screen.Bounds;
@@ -152,7 +167,7 @@ namespace BroDisplaySetup
 
                     // Create the font and brush for drawing
                     //using (Font font = new Font("Gill Sans MT", 256))
-                    using (Font measureFont = new Font(SystemFonts.CaptionFont.FontFamily, screenBounds.Height / 6, FontStyle.Regular))
+                    using (Font measureFont = new Font(SystemFonts.CaptionFont.FontFamily, (float)((screenBounds.Height / 6) * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel))
                     {
                         // Get the size of the string when drawn with the given font
                         SizeF stringSize = formGraphics.MeasureString(currentScreenId.ToString(), measureFont);
@@ -262,7 +277,7 @@ namespace BroDisplaySetup
 
                     RoundedTextBox textBox = new()
                     {
-                        Font = new Font(SystemFonts.CaptionFont.FontFamily, inputFontSize, FontStyle.Regular),
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, (float)(inputFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
                         Width = tbWidth, // adjust as needed
                         Location = textboxLoc, // adjust as needed
                         MaxLength = 1,
@@ -414,12 +429,16 @@ namespace BroDisplaySetup
                 {
                     autoScaleDisplaysCheckBox = new()
                     {
-                        Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
                         Tag = textboxIndex,
                         Text = scaleText,
                         Margin = new Padding(0, 0, 0, 0),
                     };
 
+                    // Added before sizing/positioning so its DPI context (used when measuring the
+                    // text - see ScalableCheckBox.GetRequiredWidth) matches primaryForm's, which is
+                    // already on its target monitor.
+                    primaryForm.Controls.Add(autoScaleDisplaysCheckBox);
                     autoScaleDisplaysCheckBox.SetSizeToRequired();
 
                     Point scaleDisplaysCheckBoxLoc = new Point((primaryForm.Width - autoScaleDisplaysCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
@@ -427,7 +446,6 @@ namespace BroDisplaySetup
                     scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + 20));
 
                     autoScaleDisplaysCheckBox.Location = scaleDisplaysCheckBoxLoc;
-                    primaryForm.Controls.Add(autoScaleDisplaysCheckBox);
                 }
                 else if (ConferenceRoomCandidateSerial != null)
                 {
@@ -437,13 +455,17 @@ namespace BroDisplaySetup
                     // the two never need to coexist.
                     ScalableCheckBox conferenceRoomCheckBox = new()
                     {
-                        Font = new Font(SystemFonts.CaptionFont.FontFamily, scaleFontSize, FontStyle.Regular),
+                        Font = new Font(SystemFonts.CaptionFont.FontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
                         Tag = textboxIndex,
                         Text = Properties.Resources.ConferenceRoomCheckboxText,
                         Margin = new Padding(0, 0, 0, 0),
                         IsChecked = keepInternalPrimary,
                     };
 
+                    // Added before sizing/positioning so its DPI context (used when measuring the
+                    // text - see ScalableCheckBox.GetRequiredWidth) matches primaryForm's, which is
+                    // already on its target monitor.
+                    primaryForm.Controls.Add(conferenceRoomCheckBox);
                     conferenceRoomCheckBox.SetSizeToRequired();
 
                     Point conferenceRoomCheckBoxLoc = new Point((primaryForm.Width - conferenceRoomCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
@@ -460,8 +482,6 @@ namespace BroDisplaySetup
                     // Keep this checkbox in sync if the user instead uses the always-available
                     // "Avancerat > Konferensrumsläge" menu fallback to change the answer.
                     ConferenceRoomModeChanged += newValue => conferenceRoomCheckBox.IsChecked = newValue;
-
-                    primaryForm.Controls.Add(conferenceRoomCheckBox);
                 }
 
                 // Calculate the top-left point of the string to draw it centered in the form

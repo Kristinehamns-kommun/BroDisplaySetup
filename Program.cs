@@ -16,7 +16,7 @@ namespace BroDisplaySetup
         [STAThread]
         static void Main()
         {
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -59,7 +59,14 @@ namespace BroDisplaySetup
                     helpText = Properties.Resources.ShortHelp;
                 }
 
-                using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, (float)(SystemFonts.DefaultFont.SizeInPoints * 2), FontStyle.Regular))
+                // Proportional to the screen's own resolution (pixels, not Points) - matching how
+                // the digit/checkbox fonts in Displays.cs are sized, so this looks right on both a
+                // modest laptop panel and a high-resolution conference room display, instead of
+                // being pinned to one fixed pixel count that's only correctly sized for whatever
+                // resolution it happened to be tuned against. /45 reproduces the size this rendered
+                // at under 100% scaling on a typical 1080p-tall screen.
+                float helpTextPixelSize = appForm.Height / 45f;
+                using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, helpTextPixelSize, FontStyle.Regular, GraphicsUnit.Pixel))
                 using (Brush brush = new SolidBrush(Color.Black))
                 {
                     // Get the size of the string when drawn with the given font
@@ -154,7 +161,9 @@ namespace BroDisplaySetup
             int closeButtonSize = 40;
             Button closeButton = new Button();
             closeButton.Size = new Size(closeButtonSize, closeButtonSize);
-            closeButton.Location = new Point(appForm.Width - closeButton.Width - (closeButtonSize/2), (closeButtonSize));
+            // menuStrip.Bottom (not a fixed offset) since the menu bar's own height grows with DPI
+            // scaling - a fixed Y would leave the button overlapping it at higher scaling.
+            closeButton.Location = new Point(appForm.Width - closeButton.Width - (closeButtonSize/2), menuStrip.Bottom + (closeButtonSize/2));
             closeButton.Text = ""; // Clear the button's text
             closeButton.FlatStyle = FlatStyle.Flat;
             closeButton.FlatAppearance.BorderSize = 0;
@@ -185,6 +194,17 @@ namespace BroDisplaySetup
 
             appForm.Controls.Add(closeButton);
 
+            // KeyPreview so this fires even when a child control (a number textbox, a checkbox)
+            // has focus, not just when the Form itself does.
+            appForm.KeyPreview = true;
+            appForm.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    appForm.Close();
+                }
+            };
+
             Application.Run(appForm);
         }
 
@@ -210,7 +230,7 @@ namespace BroDisplaySetup
 
             while (!fitWithinMaxWidth && fontSize > 8)
             {
-                using (Font adjustedFont = new Font(font.FontFamily, fontSize, font.Style))
+                using (Font adjustedFont = new Font(font.FontFamily, fontSize, font.Style, font.Unit))
                 {
                     // Check if all lines fit within the maximum width
                     fitWithinMaxWidth = true;
@@ -235,7 +255,7 @@ namespace BroDisplaySetup
 
 
             // Use adjusted font size
-            using (font = new Font(font.FontFamily, fontSize, font.Style)) { 
+            using (font = new Font(font.FontFamily, fontSize, font.Style, font.Unit)) {
                
                 // Compute size of the text used for drawing the box
                 int textTotalHeight = 0;
