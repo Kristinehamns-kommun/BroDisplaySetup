@@ -124,7 +124,7 @@
         {
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_3BB7B4EADBD0420EB8390253237DBFEA"
             {
-            "SourcePath" = "8:..\\bin\\Release\\net7.0-windows\\publish\\win-x64\\BroDisplaySetup.exe"
+            "SourcePath" = "8:..\\bin\\Release\\net10.0-windows\\publish\\win-x64\\BroDisplaySetup.exe"
             "TargetName" = "8:BroDisplaySetup.exe"
             "Tag" = "8:"
             "Folder" = "8:_1238845A09CC4049941FCE0590E54AC5"

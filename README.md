@@ -61,7 +61,7 @@ Run:
 docker/build.sh
 ```
 
-Output is in `bin\Release\net7.0-windows\publish\win-x64\BroDisplaySetup.exe`.
+Output is in `bin\Release\net10.0-windows\publish\win-x64\BroDisplaySetup.exe`.
 
 ## Known issues
 

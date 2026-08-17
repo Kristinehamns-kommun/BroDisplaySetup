@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-BroDisplaySetup is a Windows Forms (.NET 7, `net7.0-windows`) desktop app that simplifies arranging multi-monitor setups. It shows a numbered overlay on each connected screen, lets the user type the order the numbers appear in (left to right), then arranges the screens accordingly via Win32 display APIs, sets the left-most external monitor as primary (unless a single large "conference room" screen is detected — see below), and applies each screen's optimal resolution.
+BroDisplaySetup is a Windows Forms (.NET 10, `net10.0-windows`) desktop app that simplifies arranging multi-monitor setups. It shows a numbered overlay on each connected screen, lets the user type the order the numbers appear in (left to right), then arranges the screens accordingly via Win32 display APIs, sets the left-most external monitor as primary (unless a single large "conference room" screen is detected — see below), and applies each screen's optimal resolution.
 
 ## Build / run
 
@@ -23,7 +23,7 @@ Docker build (produces the same output as CI, without needing VS installed):
 docker/build.sh
 ```
 
-Output: `bin\Release\net7.0-windows\publish\win-x64\BroDisplaySetup.exe`
+Output: `bin\Release\net10.0-windows\publish\win-x64\BroDisplaySetup.exe`
 
 There is no automated test suite — `TESTING.md` describes a manual test checklist (see below).
 

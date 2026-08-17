@@ -247,7 +247,7 @@ namespace BroDisplaySetup
             if (primaryForm != null)
             {
 
-                primaryForm.Closed += (s, e) =>
+                primaryForm.FormClosed += (s, e) =>
                 {
                     screenIdForms.ForEach(f => {
                         if (f != primaryForm)
