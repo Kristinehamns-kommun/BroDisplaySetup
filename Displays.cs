@@ -21,6 +21,11 @@ namespace BroDisplaySetup
         // switching to Pixel units doesn't also shrink everything at the same time.
         private const double PointsToPixelsAt96Dpi = 96.0 / 72.0;
 
+        // Gap between the scale/conference-room checkbox and the textbox row below it - was
+        // duplicated as a literal 20 in two places (the regular and conference-room checkbox
+        // layouts), now shared so the two stay in sync if it's ever tuned.
+        private const int ControlSpacingPx = 20;
+
         // Whether the "scale displays" checkbox was shown for the most recent
         // ConfigureDisplayOrderAndArrangeForm() call. Read by Program.cs to pick help text that
         // matches what's actually on screen - the checkbox is hidden when scaling is forced
@@ -131,9 +136,8 @@ namespace BroDisplaySetup
 
             List<String> initialArrangement = GetAutoArrangedLTRScreenDeviceNames();
             
-            Color khBroColor = Color.FromArgb(205, 236, 251);
-            Color unselectedColor = SystemColors.ControlDark;
-            Color selectedColor = khBroColor; // Form.DefaultBackColor;
+            Color unselectedColor = BrandStyle.LightGray;
+            Color selectedColor = BrandStyle.PaleBlue;
 
             foreach (String screenDeviceName in initialArrangement)
             {
@@ -165,8 +169,12 @@ namespace BroDisplaySetup
                     int displayIndex = screen.DeviceName.LastIndexOf("DISPLAY");
                     int displayNum = Int32.Parse(screen.DeviceName.Substring(displayIndex + "DISPLAY".Length));
 
-                    // Create the font and brush for drawing
-                    //using (Font font = new Font("Gill Sans MT", 256))
+                    // Deliberately not a brand font here (tried both the heading sans and the body
+                    // serif) - a single giant standalone digit needs to be read at a glance, and
+                    // Segoe UI's even strokes and uniform-height lining figures do that better than
+                    // Gill Sans MT's humanist shapes or Garamond's thin/high-contrast old-style
+                    // figures, both of which read worse at this size despite being fine for their
+                    // intended body/heading text use.
                     using (Font measureFont = new Font(SystemFonts.CaptionFont.FontFamily, (float)((screenBounds.Height / 6) * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel))
                     {
                         // Get the size of the string when drawn with the given font
@@ -284,6 +292,7 @@ namespace BroDisplaySetup
                         BorderStyle = BorderStyle.None,
                         BackColor = Color.White,
                         ForeColor = Color.Black,
+                        FocusBorderColor = BrandStyle.PrimaryBlue,
                         Tag = textboxIndex,
                         TextAlign = HorizontalAlignment.Center,
                         Margin = new Padding(5, 0, 0, 20),
@@ -429,7 +438,12 @@ namespace BroDisplaySetup
                 {
                     autoScaleDisplaysCheckBox = new()
                     {
-                        Font = new Font(SystemFonts.CaptionFont.FontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
+                        Font = new Font(BrandStyle.HeadingFontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
+                        // SupplementaryBlue, not PrimaryBlue - the checkbox can sit on the pale-blue
+                        // "selected screen" background (BrandStyle.PaleBlue), and PrimaryBlue against
+                        // that is under 1.5:1 contrast, reading as disabled. SupplementaryBlue holds
+                        // ~3:1 against both the pale-blue and white/light-gray backgrounds.
+                        ForeColor = BrandStyle.SupplementaryBlue,
                         Tag = textboxIndex,
                         Text = scaleText,
                         Margin = new Padding(0, 0, 0, 0),
@@ -443,7 +457,7 @@ namespace BroDisplaySetup
 
                     Point scaleDisplaysCheckBoxLoc = new Point((primaryForm.Width - autoScaleDisplaysCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
                     //scaleDisplaysCheckBoxLoc.Offset(0, firstTextBox.Height+10);
-                    scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + 20));
+                    scaleDisplaysCheckBoxLoc.Offset(0, -(autoScaleDisplaysCheckBox.Height + ControlSpacingPx));
 
                     autoScaleDisplaysCheckBox.Location = scaleDisplaysCheckBoxLoc;
                 }
@@ -455,7 +469,12 @@ namespace BroDisplaySetup
                     // the two never need to coexist.
                     ScalableCheckBox conferenceRoomCheckBox = new()
                     {
-                        Font = new Font(SystemFonts.CaptionFont.FontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
+                        Font = new Font(BrandStyle.HeadingFontFamily, (float)(scaleFontSize * PointsToPixelsAt96Dpi), FontStyle.Regular, GraphicsUnit.Pixel),
+                        // SupplementaryBlue, not PrimaryBlue - the checkbox can sit on the pale-blue
+                        // "selected screen" background (BrandStyle.PaleBlue), and PrimaryBlue against
+                        // that is under 1.5:1 contrast, reading as disabled. SupplementaryBlue holds
+                        // ~3:1 against both the pale-blue and white/light-gray backgrounds.
+                        ForeColor = BrandStyle.SupplementaryBlue,
                         Tag = textboxIndex,
                         Text = Properties.Resources.ConferenceRoomCheckboxText,
                         Margin = new Padding(0, 0, 0, 0),
@@ -469,7 +488,7 @@ namespace BroDisplaySetup
                     conferenceRoomCheckBox.SetSizeToRequired();
 
                     Point conferenceRoomCheckBoxLoc = new Point((primaryForm.Width - conferenceRoomCheckBox.Size.Width) / 2, firstTextBox.Location.Y);
-                    conferenceRoomCheckBoxLoc.Offset(0, -(conferenceRoomCheckBox.Height + 20));
+                    conferenceRoomCheckBoxLoc.Offset(0, -(conferenceRoomCheckBox.Height + ControlSpacingPx));
 
                     conferenceRoomCheckBox.Location = conferenceRoomCheckBoxLoc;
 
@@ -534,11 +553,11 @@ namespace BroDisplaySetup
                         System.Threading.Thread.Sleep(100);
 
                         primaryForm.Close();
-                        
+
                     };
                 }
 
-                screenIdForms.ForEach(f => { f.Show(); });
+                screenIdForms.ForEach(f => f.Show());
 
                 primaryForm.BringToFront();
                 primaryForm.Focus();

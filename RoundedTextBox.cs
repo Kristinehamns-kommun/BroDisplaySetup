@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using BroDisplaySetup;
 class RoundedTextBox : UserControl
 {
     private TextBox textBox;
@@ -9,6 +10,13 @@ class RoundedTextBox : UserControl
     private const int paddingRight = 15; // Padding between the text box and the rounded rectangle
     private const int paddingTop = 15; // Padding between the text box and the rounded rectangle
     private const int paddingBottom = 20; // Padding between the text box and the rounded rectangle
+
+    private bool hasFocus;
+
+    // Color of the border while the inner textbox has focus. Left as a settable property (rather
+    // than hard-coding a brand color here) so this control stays generic/reusable - the caller
+    // decides what "focused" should look like.
+    public Color FocusBorderColor { get; set; } = Color.White;
 
     public RoundedTextBox()
     {
@@ -50,13 +58,15 @@ class RoundedTextBox : UserControl
 
     private void TextBox_GotFocus(object sender, EventArgs e)
     {
-        //gotFocusInRoundedTextBox?.Invoke(this, e);
+        hasFocus = true;
+        Invalidate();
         base.OnGotFocus(e);
     }
 
     private void TextBox_LostFocus(object sender, EventArgs e)
     {
-        //lostFocusInRoundedTextBox?.Invoke(this, e);
+        hasFocus = false;
+        Invalidate();
         base.OnLostFocus(e);
     }
     public new bool Focus()
@@ -142,23 +152,17 @@ class RoundedTextBox : UserControl
     {
         base.OnPaint(e);
 
-        using (var path = new GraphicsPath())
-        using (var pen = new Pen(Color.White, 2))
+        // The control clips its own painting to ClientRectangle, so the shadow (drawn offset toward
+        // the bottom-right) needs that much margin reserved on those sides or it gets cut off.
+        int shadowOffset = RoundedRectangle.DefaultShadowOffset;
+        RectangleF rect = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1 - shadowOffset, ClientRectangle.Height - 1 - shadowOffset);
+        int radius = 10;
+
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+        using (var pen = new Pen(hasFocus ? FocusBorderColor : Color.White, 2))
         {
-            RectangleF rect = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
-            int radius = 10;
-
-            // Create a rounded rectangle path
-            path.AddArc(rect.X, rect.Y, 2 * radius, 2 * radius, 180, 90); // Top-left corner
-            path.AddArc(rect.X + rect.Width - 2 * radius, rect.Y, 2 * radius, 2 * radius, 270, 90); // Top-right corner
-            path.AddArc(rect.X + rect.Width - 2 * radius, rect.Y + rect.Height - 2 * radius, 2 * radius, 2 * radius, 0, 90); // Bottom-right corner
-            path.AddArc(rect.X, rect.Y + rect.Height - 2 * radius, 2 * radius, 2 * radius, 90, 90); // Bottom-left corner
-            path.CloseFigure();
-
-            // Draw the rounded rectangle
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.FillPath(Brushes.White, path);
-            e.Graphics.DrawPath(pen, path);
+            RoundedRectangle.FillWithShadow(e.Graphics, rect, radius, Brushes.White, pen);
         }
     }
 

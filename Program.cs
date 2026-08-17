@@ -70,7 +70,7 @@ namespace BroDisplaySetup
                 // resolution it happened to be tuned against. /45 reproduces the size this rendered
                 // at under 100% scaling on a typical 1080p-tall screen.
                 float helpTextPixelSize = appForm.Height / 45f;
-                using (Font font = new Font(SystemFonts.DefaultFont.FontFamily, helpTextPixelSize, FontStyle.Regular, GraphicsUnit.Pixel))
+                using (Font font = new Font(BrandStyle.HeadingFontFamily, helpTextPixelSize, FontStyle.Regular, GraphicsUnit.Pixel))
                 using (Brush brush = new SolidBrush(Color.Black))
                 {
                     // Get the size of the string when drawn with the given font
@@ -88,6 +88,8 @@ namespace BroDisplaySetup
             // Create a MenuStrip control for the menu bar
             MenuStrip menuStrip = new MenuStrip();
             menuStrip.Dock = DockStyle.Top;
+            menuStrip.ForeColor = Color.Black;
+            menuStrip.Renderer = new ToolStripProfessionalRenderer(new MenuStripColorTable());
 
             ToolStripMenuItem advancedMenuItem = new ToolStripMenuItem("Avancerat");
             menuStrip.Items.Add(advancedMenuItem);
@@ -230,6 +232,31 @@ namespace BroDisplaySetup
             Application.Run(appForm);
         }
 
+        // Matches the menu bar's colors to the rest of the overlay UI instead of the default
+        // Windows theme. Rather than blending into the gray form background (which just reads as
+        // broken - no seam at all), it's styled white like the number cards/help box, so it reads
+        // as another UI surface sitting on top of the gray, with the accent color from
+        // Displays.cs's "selected screen" highlight reused for hover/press.
+        private class MenuStripColorTable : ProfessionalColorTable
+        {
+            public override Color MenuStripGradientBegin => Color.White;
+            public override Color MenuStripGradientEnd => Color.White;
+            public override Color ToolStripBorder => SystemColors.ControlDark;
+
+            public override Color MenuItemSelected => BrandStyle.PrimaryBlue;
+            public override Color MenuItemSelectedGradientBegin => BrandStyle.PrimaryBlue;
+            public override Color MenuItemSelectedGradientEnd => BrandStyle.PrimaryBlue;
+            public override Color MenuItemPressedGradientBegin => BrandStyle.PrimaryBlue;
+            public override Color MenuItemPressedGradientEnd => BrandStyle.PrimaryBlue;
+            public override Color MenuItemBorder => SystemColors.ControlDark;
+            public override Color MenuBorder => SystemColors.ControlDark;
+
+            public override Color ToolStripDropDownBackground => Color.White;
+            public override Color ImageMarginGradientBegin => Color.White;
+            public override Color ImageMarginGradientMiddle => Color.White;
+            public override Color ImageMarginGradientEnd => Color.White;
+        }
+
         private static void drawStringParagraphsWithinMaxWidth(Graphics graphics, List<string> paragraphs, Font font, Brush brush, PointF lastParagraphLocation, int maxParagraphWidth)
         {
             PointF boxLocation = lastParagraphLocation;
@@ -307,18 +334,10 @@ namespace BroDisplaySetup
                 RectangleF rect = new RectangleF(paragraphLocations[0].X-textPadding.Left, paragraphLocations[0].Y-textPadding.Top, textMaxWidth+textPadding.Right, textTotalHeight+textPadding.Bottom);
                 int radius = 10;
 
-                // Draw the rounded rectangle as the background
-                using (GraphicsPath path = new GraphicsPath())
+                graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 using (Pen pen = new Pen(Color.White))
                 {
-                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90); // Top-left corner
-                    path.AddArc(rect.X + rect.Width - radius, rect.Y, radius, radius, 270, 90); // Top-right corner
-                    path.AddArc(rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, radius, 0, 90); // Bottom-right corner
-                    path.AddArc(rect.X, rect.Y + rect.Height - radius, radius, radius, 90, 90); // Bottom-left corner
-                    path.CloseFigure();
-
-                    graphics.FillPath(Brushes.White, path);
-                    graphics.DrawPath(pen, path);
+                    RoundedRectangle.FillWithShadow(graphics, rect, radius, Brushes.White, pen);
                 }
 
                 for (int i = paragraphs.Count - 1; i >= 0; i--)

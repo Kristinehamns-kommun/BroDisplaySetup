@@ -16,6 +16,12 @@ namespace BroDisplaySetup
     {
         public event EventHandler CheckedChanged;
 
+        // Separate from ForeColor (which colors the box border/checkmark) so a caller can use an
+        // accent color for the box while keeping the label itself at a color with enough contrast
+        // to read comfortably - a light accent that's fine for a 2px checkmark stroke can be too
+        // weak for text.
+        public Color TextColor { get; set; } = Color.Black;
+
         private bool _isChecked;
         public bool IsChecked
         {
@@ -148,7 +154,7 @@ namespace BroDisplaySetup
             }
 
             // Draw text
-            using (Brush textBrush = new SolidBrush(ForeColor))
+            using (Brush textBrush = new SolidBrush(TextColor))
             {
                 g.DrawString(Text, Font, textBrush, checkBoxRect.Right + 5, (Height - Font.Height) / 2);
             }
