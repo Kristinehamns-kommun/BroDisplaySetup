@@ -29,7 +29,7 @@ Open `BroDisplaySetup.csproj` and update all three versions to match the new maj
 <PropertyGroup>
   <Version>2.0.0</Version> <!-- NuGet package/Project version -->
   <AssemblyVersion>2.0.0</AssemblyVersion>
-  <FileVersion>0.9.3</FileVersion>
+  <FileVersion>2.0.0</FileVersion>
 </PropertyGroup>
 ```
 
