@@ -847,6 +847,15 @@ namespace BroDisplaySetup
 
             public static DEVMODE GetOptimalDisplayMode(string deviceName)
             {
+                return GetOptimalDisplayMode(deviceName, out _);
+            }
+
+            // Diagnostics overload: also reports how the returned mode was chosen, surfaced in the
+            // "Show screen info" screen (DisplayInfo.OptimalResolutionDiagnostics) so a mis-detection
+            // on real hardware (eg. picking a wider "signal" resolution like DCI 4K 4096x2160 over a
+            // panel's true native 3840x2160) can be diagnosed without a debugger.
+            public static DEVMODE GetOptimalDisplayMode(string deviceName, out string selectionDiagnostics)
+            {
                 // Prefer the display's own native/recommended resolution - the same one Windows
                 // itself marks "Recommended" in Settings, sourced from the EDID preferred-timing
                 // entry - over raw pixel count. Some panels additionally accept (without properly
@@ -854,17 +863,28 @@ namespace BroDisplaySetup
                 // pixel count than their native panel resolution (eg. a native 3840x2160 UHD panel
                 // that also accepts a 4096x2160 DCI 4K input), so simply maximizing width*height
                 // can pick a mode the display can't actually show correctly.
-                (uint Width, uint Height)? preferredResolution = GetPreferredDisplayMode(deviceName);
+                (uint Width, uint Height)? preferredResolution = GetPreferredDisplayMode(deviceName, out string preferredModeDiagnostics);
 
                 int? bestModeIndex = preferredResolution.HasValue
                     ? FindBestDisplayModeIndex(deviceName, mode =>
                         mode.dmPelsWidth == preferredResolution.Value.Width && mode.dmPelsHeight == preferredResolution.Value.Height)
                     : null;
 
+                if (preferredResolution.HasValue && bestModeIndex == null)
+                {
+                    preferredModeDiagnostics += " - but no enumerated mode on this display matches that resolution exactly";
+                }
+
+                bool usedFallbackHeuristic = bestModeIndex == null;
+
                 // Fall back to the original "biggest mode wins" heuristic if the display's
                 // preferred resolution couldn't be determined, or none of its enumerated modes
                 // actually match it.
                 bestModeIndex ??= FindBestDisplayModeIndex(deviceName, mode => true);
+
+                selectionDiagnostics = usedFallbackHeuristic
+                    ? $"Preferred mode lookup: {preferredModeDiagnostics}. Fell back to the largest-by-pixel-count supported mode, which can incorrectly prefer a wider 'signal' resolution (eg. DCI 4K 4096x2160) over the panel's true native resolution (eg. UHD 3840x2160)."
+                    : $"Preferred mode lookup: {preferredModeDiagnostics}. Used the enumerated mode matching that resolution.";
 
                 if (bestModeIndex == null)
                 {
@@ -918,12 +938,21 @@ namespace BroDisplaySetup
              */
             public static (uint Width, uint Height)? GetPreferredDisplayMode(string deviceName)
             {
+                return GetPreferredDisplayMode(deviceName, out _);
+            }
+
+            // Diagnostics overload: reports which stage failed (or the source of the value returned)
+            // instead of silently collapsing every failure mode to null. See GetOptimalDisplayMode's
+            // diagnostics overload for how this is surfaced to the user.
+            public static (uint Width, uint Height)? GetPreferredDisplayMode(string deviceName, out string diagnostics)
+            {
                 uint pathArraySize = 0;
                 uint modeArraySize = 0;
 
                 int bufferSizeResult = User_32.GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, out pathArraySize, out modeArraySize);
                 if (bufferSizeResult != 0)
                 {
+                    diagnostics = $"GetDisplayConfigBufferSizes failed (result {bufferSizeResult})";
                     return null;
                 }
 
@@ -932,8 +961,11 @@ namespace BroDisplaySetup
                 int queryResult = User_32.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, ref pathArraySize, pathArray, ref modeArraySize, modeArray, IntPtr.Zero);
                 if (queryResult != 0)
                 {
+                    diagnostics = $"QueryDisplayConfig failed (result {queryResult})";
                     return null;
                 }
+
+                List<string> seenSourceNames = new List<string>();
 
                 foreach (DISPLAYCONFIG_PATH_INFO path in pathArray)
                 {
@@ -950,8 +982,11 @@ namespace BroDisplaySetup
 
                     if (User_32.DisplayConfigGetDeviceInfo(ref sourceName) != 0)
                     {
+                        seenSourceNames.Add("<DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME failed>");
                         continue;
                     }
+
+                    seenSourceNames.Add(sourceName.viewGdiDeviceName);
 
                     if (!string.Equals(sourceName.viewGdiDeviceName, deviceName, StringComparison.OrdinalIgnoreCase))
                     {
@@ -969,14 +1004,18 @@ namespace BroDisplaySetup
                         },
                     };
 
-                    if (User_32.DisplayConfigGetDeviceInfo(ref preferredMode) != 0)
+                    int preferredModeResult = User_32.DisplayConfigGetDeviceInfo(ref preferredMode);
+                    if (preferredModeResult != 0)
                     {
+                        diagnostics = $"Matched source '{deviceName}' but DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE failed (result {preferredModeResult})";
                         return null;
                     }
 
+                    diagnostics = $"{preferredMode.width}x{preferredMode.height} (from DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE)";
                     return (preferredMode.width, preferredMode.height);
                 }
 
+                diagnostics = $"No active CCD path's source device name matched '{deviceName}' (saw: {(seenSourceNames.Count > 0 ? string.Join(", ", seenSourceNames) : "none")})";
                 return null;
             }
 
@@ -1312,22 +1351,52 @@ namespace BroDisplaySetup
                 //const uint DM_DISPLAYFREQUENCY = 0x00400000;
                 //const uint DM_DISPLAYFLAGS = 0x00200000;
 
+                DiagnosticsLog.AppendLine();
+                DiagnosticsLog.AppendLine($"--- Arrange ({DateTime.Now:HH:mm:ss}) ---");
+
+                var processedDisplayNames = new List<string>();
+
+                // Logs the resolution decision for one display: what it's currently at, what was
+                // computed as optimal, whether Arrange decided to switch to it, and the DEVMODE
+                // actually about to be sent. Switches whenever the optimal mode differs from the
+                // current one - GetOptimalDisplayMode has already determined that's the mode we
+                // want (native/preferred resolution when known, matched against the enumerated
+                // modes), so it shouldn't be second-guessed here by re-scoring the two by raw pixel
+                // count: a mode with a higher width*height (eg. a wider "signal" resolution like DCI
+                // 4K 4096x2160 that Windows itself picked at some point) can outscore the display's
+                // true native mode (eg. UHD 3840x2160) despite being the wrong mode entirely - that
+                // used to leave the display stuck on it forever, since a strictly-higher-score
+                // requirement can never be satisfied by "switching down" to the correct resolution.
+                void LogModeDecision(string displayName, DEVMODE current, DEVMODE optimal, bool switching, DEVMODE toSend)
+                {
+                    DiagnosticsLog.AppendLine($"{displayName}:");
+                    DiagnosticsLog.AppendLine($"  Current before: {current.dmPelsWidth}x{current.dmPelsHeight}@{current.dmDisplayFrequency}Hz");
+                    DiagnosticsLog.AppendLine($"  Computed optimal: {optimal.dmPelsWidth}x{optimal.dmPelsHeight}@{optimal.dmDisplayFrequency}Hz");
+                    DiagnosticsLog.AppendLine($"  Decision: {(switching ? "switch to optimal" : "keep current (already matches optimal)")}");
+                    DiagnosticsLog.AppendLine($"  DEVMODE being sent: {toSend.dmPelsWidth}x{toSend.dmPelsHeight}, dmFields=0x{toSend.dmFields:X}");
+                }
+
                 DEVMODE optimalPrimaryDisplayMode = GetOptimalDisplayMode(primaryDisplayName);
                 DEVMODE primaryDevMode = GetCurrentDisplayMode(primaryDisplayName);
-                
-                if (CompareDisplayModes(primaryDisplayName, optimalPrimaryDisplayMode, primaryDevMode) > 0)
+
+                bool primarySwitching = !DisplayModesAreEqual(optimalPrimaryDisplayMode, primaryDevMode);
+                if (primarySwitching)
                 {
                     System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + optimalPrimaryDisplayMode.dmPelsWidth + "x" + optimalPrimaryDisplayMode.dmPelsHeight + " at " + optimalPrimaryDisplayMode.dmDisplayFrequency + "Hz");
                     primaryDevMode = optimalPrimaryDisplayMode;
                     primaryDevMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                 }
 
+                LogModeDecision(primaryDisplayName, GetCurrentDisplayMode(primaryDisplayName), optimalPrimaryDisplayMode, primarySwitching, primaryDevMode);
+                processedDisplayNames.Add(primaryDisplayName);
+
                 primaryDevMode.dmFields |= DM_POSITION;
                 primaryDevMode.dmPosition.x = 0;
                 primaryDevMode.dmPosition.y = 0;
 
                 System.Diagnostics.Debug.WriteLine("Set primary " + primaryDisplayName + " to " + primaryDevMode.dmPosition.x + "," + primaryDevMode.dmPosition.y);
-                User_32.ChangeDisplaySettingsEx(primaryDisplayName, ref primaryDevMode, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_SET_PRIMARY | ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET, IntPtr.Zero);
+                DISP_CHANGE primaryChangeResult = User_32.ChangeDisplaySettingsEx(primaryDisplayName, ref primaryDevMode, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_SET_PRIMARY | ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET, IntPtr.Zero);
+                DiagnosticsLog.AppendLine($"  ChangeDisplaySettingsEx (queued) result: {primaryChangeResult}");
 
                 IntPtr nullPtr = IntPtr.Zero;
                 int positionX = 0;
@@ -1339,12 +1408,16 @@ namespace BroDisplaySetup
                 {
                     DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
                     DEVMODE devMode = GetCurrentDisplayMode(displayName);
-                    if (CompareDisplayModes(displayName, optimalDisplayMode, devMode) > 0)
+                    bool switching = !DisplayModesAreEqual(optimalDisplayMode, devMode);
+                    if (switching)
                     {
                         System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
                         devMode = optimalDisplayMode;
                         devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                     }
+
+                    LogModeDecision(displayName, GetCurrentDisplayMode(displayName), optimalDisplayMode, switching, devMode);
+                    processedDisplayNames.Add(displayName);
 
                     positionX -= (int)GetCurrentResolutionWidth(displayName);
                     devMode.dmFields |= DM_POSITION;
@@ -1353,12 +1426,13 @@ namespace BroDisplaySetup
 
                     System.Diagnostics.Debug.WriteLine("Set left " + displayName + " to " + devMode.dmPosition.x + "," + devMode.dmPosition.y);
 
-                    User_32.ChangeDisplaySettingsEx(
+                    DISP_CHANGE changeResult = User_32.ChangeDisplaySettingsEx(
                         displayName,
                         ref devMode,
                         (IntPtr)null,
                         ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET,
                         IntPtr.Zero);
+                    DiagnosticsLog.AppendLine($"  ChangeDisplaySettingsEx (queued) result: {changeResult}");
                 }
 
                 positionX = (int)GetCurrentResolutionWidth(primaryDisplayName);
@@ -1367,30 +1441,43 @@ namespace BroDisplaySetup
                 {
                     DEVMODE optimalDisplayMode = GetOptimalDisplayMode(displayName);
                     DEVMODE devMode = GetCurrentDisplayMode(displayName);
-                    if (CompareDisplayModes(displayName, optimalDisplayMode, devMode) > 0)
+                    bool switching = !DisplayModesAreEqual(optimalDisplayMode, devMode);
+                    if (switching)
                     {
                         System.Diagnostics.Debug.WriteLine("Set " + displayName + " to " + optimalDisplayMode.dmPelsWidth + "x" + optimalDisplayMode.dmPelsHeight + " at " + optimalDisplayMode.dmDisplayFrequency + "Hz");
                         devMode = optimalDisplayMode;
                         devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT; // | DM_BITSPERPEL | DM_DISPLAYFREQUENCY; // Update dmFields
                     }
 
+                    LogModeDecision(displayName, GetCurrentDisplayMode(displayName), optimalDisplayMode, switching, devMode);
+                    processedDisplayNames.Add(displayName);
+
                     devMode.dmFields |= DM_POSITION;
                     devMode.dmPosition.x = positionX;
                     devMode.dmPosition.y = (int)Math.Max(0, primaryDevHeight - devMode.dmPelsHeight);
                     System.Diagnostics.Debug.WriteLine("Set right " + displayName + " to " + positionX + "," + positionY);
 
-                    User_32.ChangeDisplaySettingsEx(
+                    DISP_CHANGE changeResult = User_32.ChangeDisplaySettingsEx(
                         displayName,
                         ref devMode,
                         (IntPtr)null,
                         ChangeDisplaySettingsFlags.CDS_UPDATEREGISTRY | ChangeDisplaySettingsFlags.CDS_NORESET,
                         IntPtr.Zero);
+                    DiagnosticsLog.AppendLine($"  ChangeDisplaySettingsEx (queued) result: {changeResult}");
 
                     positionX += (int)GetCurrentResolutionWidth(displayName);
                 }
 
                 // Apply the settings and update the registry
-                User_32.ChangeDisplaySettingsEx(null, IntPtr.Zero, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_NONE, (IntPtr)null);
+                DISP_CHANGE finalApplyResult = User_32.ChangeDisplaySettingsEx(null, IntPtr.Zero, (IntPtr)null, ChangeDisplaySettingsFlags.CDS_NONE, (IntPtr)null);
+                DiagnosticsLog.AppendLine($"Final apply (ChangeDisplaySettingsEx with no device) result: {finalApplyResult}");
+
+                DiagnosticsLog.AppendLine("Actual resulting modes after final apply:");
+                foreach (string displayName in processedDisplayNames)
+                {
+                    DEVMODE actualMode = GetCurrentDisplayMode(displayName);
+                    DiagnosticsLog.AppendLine($"  {displayName}: {actualMode.dmPelsWidth}x{actualMode.dmPelsHeight}@{actualMode.dmDisplayFrequency}Hz");
+                }
             }
 
             private static DEVMODE GetDevMode1()

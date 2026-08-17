@@ -22,6 +22,18 @@ namespace BroDisplaySetup
             List<DisplayInfo> displayInfoList = DisplayInfo.GetDisplayInfoForAllConnectedDisplayDevices();
 
             List<string> screenInfo = new();
+
+            // Condensed summary first - just the resolution-selection outcome per display, so this
+            // can be copied off the top of the box without scrolling past the full per-display dump
+            // below (which is a lot to sift through when only the resolution pick is in question).
+            screenInfo.Add("=== Resolution diagnostics summary ===");
+            foreach (var displayInfo in displayInfoList)
+            {
+                screenInfo.Add($"{displayInfo.UserFriendlyName} ({displayInfo.DeviceName}): picked {displayInfo.OptimalResolution.Width}x{displayInfo.OptimalResolution.Height} - {displayInfo.OptimalResolutionDiagnostics}");
+            }
+            screenInfo.Add("=== Full details below ===");
+            screenInfo.Add("--------------------------");
+
             if (!string.IsNullOrWhiteSpace(Displays.ConferenceRoomCandidateSerial))
             {
                 screenInfo.Add($"Konferensrumsläge: {(Displays.ConferenceRoomModeActive ? "Ja" : "Nej")}");

@@ -23,6 +23,12 @@ namespace BroDisplaySetup
         public string DeviceName { get; set; }
         public Rectangle Bounds { get; set; }
         public Size OptimalResolution { get; set; }
+
+        // How OptimalResolution was chosen - which lookup path succeeded/failed and why. Surfaced
+        // in ToString() (the "Show screen info" screen) to diagnose real-hardware cases where the
+        // wrong resolution gets picked, without needing a debugger attached.
+        public string OptimalResolutionDiagnostics { get; set; }
+
         public DPIScalingInfo DpiScalingInfo { get; set; }
 
         // Physical screen dimensions in cm, from EDID via WmiMonitorBasicDisplayParams. 0x0 if unreported.
@@ -49,6 +55,7 @@ namespace BroDisplaySetup
                    $"Internal: {internalStringValue}{Environment.NewLine}" +
                    $"Bounds: {Bounds}{Environment.NewLine}" +
                    $"OptimalResolution: {OptimalResolution.Width} x {OptimalResolution.Height}{Environment.NewLine}" +
+                   $"OptimalResolutionDiagnostics: {OptimalResolutionDiagnostics}{Environment.NewLine}" +
                    $"PhysicalSize: {PhysicalWidthCm} x {PhysicalHeightCm} cm ({DiagonalInches:0.#}\" diagonal){Environment.NewLine}" +
                    $"DpiScalingInfo: {DpiScalingInfo.Current}% (min: {DpiScalingInfo.Minimum}%, max: {DpiScalingInfo.Maximum}%, recommended: {DpiScalingInfo.Recommended}%)";
         }
@@ -170,9 +177,10 @@ namespace BroDisplaySetup
                 DEVMODE currentDevMode = Extern.Displays.GetCurrentDisplayMode(deviceName);
                 displayInfo.Bounds = new Rectangle(currentDevMode.dmPosition.x, currentDevMode.dmPosition.y, (int)currentDevMode.dmPelsWidth, (int)currentDevMode.dmPelsHeight);
 
-                Extern.DEVMODE optimalDevMode = Extern.Displays.GetOptimalDisplayMode(deviceName);
+                Extern.DEVMODE optimalDevMode = Extern.Displays.GetOptimalDisplayMode(deviceName, out string optimalResolutionDiagnostics);
 
                 displayInfo.OptimalResolution =  new Size((int)optimalDevMode.dmPelsWidth, (int)optimalDevMode.dmPelsHeight);
+                displayInfo.OptimalResolutionDiagnostics = optimalResolutionDiagnostics;
 
                 foreach (DisplayInfo d in displayInfoList)
                 {
@@ -181,6 +189,8 @@ namespace BroDisplaySetup
 
                 displayInfoList.Add(displayInfo);
             }
+
+            DiagnosticsLog.LogResolutionSelection(displayInfoList);
 
             return displayInfoList;
         }

@@ -1,8 +1,10 @@
 using Microsoft.VisualBasic.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -19,6 +21,8 @@ namespace BroDisplaySetup
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            DiagnosticsLog.StartNewSession();
 
             string programName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
 
@@ -94,6 +98,9 @@ namespace BroDisplaySetup
             ToolStripMenuItem forgetConferenceRoomMenuItem = new ToolStripMenuItem("Glöm konferensrumsval...");
             advancedMenuItem.DropDownItems.Add(forgetConferenceRoomMenuItem);
 
+            ToolStripMenuItem openDiagnosticsLogMenuItem = new ToolStripMenuItem("Öppna diagnostiklogg...");
+            advancedMenuItem.DropDownItems.Add(openDiagnosticsLogMenuItem);
+
             // Mirrors the inline conference-room checkbox shown when a single large external display
             // is detected, and stays enabled even when it isn't - a manual fallback for setups the
             // size heuristic doesn't flag (eg. a smaller shared screen, or more than one external).
@@ -123,6 +130,21 @@ namespace BroDisplaySetup
                 // Create and show the new form for about
                 About aboutForm = new About();
                 aboutForm.ShowDialog();
+            };
+
+            openDiagnosticsLogMenuItem.Click += (s, e) =>
+            {
+                if (!File.Exists(DiagnosticsLog.LogFilePath))
+                {
+                    MessageBox.Show(
+                        "Ingen diagnostiklogg hittades än. Den skapas när programmet läser av skärmarna.",
+                        "Öppna diagnostiklogg",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                Process.Start(new ProcessStartInfo(DiagnosticsLog.LogFilePath) { UseShellExecute = true });
             };
 
             forgetConferenceRoomMenuItem.Click += (s, e) =>
